@@ -1,0 +1,15 @@
+"BaiknorII"
+{
+	"base"		"sandbox"
+	"title"		"Baiknor II"
+	"maps"		"^gm_"
+	"menusystem"	"1"
+	"workshopid"	"15895"
+
+	"settings"
+	{
+		
+
+	}
+
+}
