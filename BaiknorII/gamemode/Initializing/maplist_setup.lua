@@ -24,8 +24,11 @@ if MapName == "gm_construct" then
 	GameVars.SZRadius = 750
 	PointPositions = {Vector(-2563,-1217,240),Vector(-2563,-417,240)}
 	PointNames = {"Roof","Roof1"}
-end
+elseif MapName == "gm_baik_citycentre_v3" then
 
+
+
+end
 
 
 
