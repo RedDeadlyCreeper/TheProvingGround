@@ -8,9 +8,23 @@ GM.Website 	= "N/A"
 --[[
 V1.0
 
-TODO
+<--- Current Maplist --->
+gm_construct(debug)
+gm_baik_citycentre_v3
+gm_baik_coast_03
+gm_baik_coast_03_night
+gm_baik_construct_draft1
+gm_de_port_opened_v2
+gm_emp_arid
+gm_emp_manticore
+gm_emp_midbridge
+gm_emp_palmbay
+gm_greenchoke
 
-Planned
+
+*TODO*
+
+*Planned*
 Anti AFK
 Game music
 Move weapon lists to their own folder for both client and sv
@@ -18,6 +32,10 @@ Add support for non spherical safezones *shrug*
 Win sounds
 Mapvoting
 Add point name display
+
+
+
+
 ]]--
 
 
