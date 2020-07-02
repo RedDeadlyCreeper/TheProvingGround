@@ -371,7 +371,7 @@ elseif MapName == "gm_baik_citycentre_v3" then
 	GameVars.PropCountMax = 300
 	GameVars.PointCount = 2
 	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 4000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(3400, -1928, 16),Vector(-3400, 1928, 16)}
 	PointNames = {"Green Park","Red Park"}
 
@@ -382,7 +382,7 @@ elseif MapName == "gm_baik_coast_03" then
 	GameVars.PropCountMax = 400
 	GameVars.PointCount = 2
 	GameVars.CapMul = 0.025	
-	GameVars.SZRadius = 5000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(-5137, 3755, 256),Vector(-217, 8201, 62)}
 	PointNames = {"Beach House","Docks"}
 elseif MapName == "gm_baik_coast_03_night" then
@@ -392,7 +392,7 @@ elseif MapName == "gm_baik_coast_03_night" then
 	GameVars.PropCountMax = 400
 	GameVars.PointCount = 2
 	GameVars.CapMul = 0.025	
-	GameVars.SZRadius = 5000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(-5137, 3755, 256),Vector(-217, 8201, 62)}
 	PointNames = {"Beach House","Docks"}
 elseif MapName == "gm_baik_construct_draft1" then
@@ -402,7 +402,7 @@ elseif MapName == "gm_baik_construct_draft1" then
 	GameVars.PropCountMax = 250
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 3000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(2802, 3016, 4),Vector(0,0,424),Vector(-2802, -3016, 4)}
 	PointNames = {"Parking Lot A","Parking Garage","Parking Lot B"}
 elseif MapName == "gm_de_port_opened_v2" then --V1 not included
@@ -412,7 +412,7 @@ elseif MapName == "gm_de_port_opened_v2" then --V1 not included
 	GameVars.PropCountMax = 200
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 3000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(-1022, 137, 512),Vector(1119, 190, 642),Vector(2212, 1339, 512)}
 	PointNames = {"Warehouse","Oil","Coast"}
 elseif MapName == "gm_emp_arid" then
@@ -422,7 +422,7 @@ elseif MapName == "gm_emp_arid" then
 	GameVars.PropCountMax = 400
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 5000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(-1065, -12302, 512),Vector(-604, -874, 359),Vector(-4341, 6071, 472)}
 	PointNames = {"Bunker","Bridge","Small Hill"}
 elseif MapName == "gm_emp_manticore" then
@@ -432,7 +432,7 @@ elseif MapName == "gm_emp_manticore" then
 	GameVars.PropCountMax = 300
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 5000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(3897, -4170, 1744),Vector(12,251,2048),Vector(-3988, 4155, 1744)}
 	PointNames = {"Brick Factory","Bridge","Office"}
 elseif MapName == "gm_emp_midbridge" then
@@ -442,7 +442,7 @@ elseif MapName == "gm_emp_midbridge" then
 	GameVars.PropCountMax = 400
 	GameVars.PointCount = 4
 	GameVars.CapMul = 0.01	
-	GameVars.SZRadius = 8000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(7931, -3408, 32),Vector(-7909, 3435, 32),Vector(0,0,2048),Vector(0,0,-255)}
 	PointNames = {"A Ruins","B Ruins","Hell aBridged","Under the Bridge"}
 elseif MapName == "gm_emp_palmbay" then
@@ -452,7 +452,7 @@ elseif MapName == "gm_emp_palmbay" then
 	GameVars.PropCountMax = 200
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 5000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(-7173, 11422, -2884),Vector(313, -499, -2953),Vector(3801, -9546, -2575)}
 	PointNames = {"Island","Beach House","Grassland"}
 elseif MapName == "gm_greenchoke" then
@@ -462,14 +462,12 @@ elseif MapName == "gm_greenchoke" then
 	GameVars.PropCountMax = 250
 	GameVars.PointCount = 5
 	GameVars.CapMul = 0.01	
-	GameVars.SZRadius = 5000
+	GameVars.SZRadius = 750
 	PointPositions = {Vector(6295, 2018, 1043),Vector(-5961, 2032, 929),Vector(495, -1037, 1184),Vector(-85, 3492, 910),Vector(175, -5296, 844)}
 	PointNames = {"Mountain Outpost","Town Outpost","Bridge","Island A","Island B"}
 end
 
 --Do not edit below here
-
-GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,9540)
 
 function spawnPoint(pointnum)
 
@@ -492,7 +490,11 @@ local storespawn = GameVars.FreedomSpawn
 GameVars.FreedomSpawn = GameVars.DutySpawn
 GameVars.DutySpawn = storespawn
 
+GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,9540) --CLAMP DAMN YOU
+
 function setupGamemode()
+
+	GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,9540)
 
 	game.CleanUpMap( true )
 
