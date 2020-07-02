@@ -44,6 +44,8 @@ Add point name display
 
 
 GameVars = {}
+--Because for some reason files dont like to include propperly on servers :/
+--went through 3 different include formats
 
 --AddCSLuaFile( "baiknorii/gamemode/initializing/teamsetup.lua" )
 --AddCSLuaFile( "baiknorii/gamemode/initializing/maplist_setup.lua" )
@@ -465,8 +467,9 @@ elseif MapName == "gm_greenchoke" then
 	PointNames = {"Mountain Outpost","Town Outpost","Bridge","Island A","Island B"}
 end
 
-
 --Do not edit below here
+
+GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,9540)
 
 function spawnPoint(pointnum)
 
@@ -517,7 +520,7 @@ local	storespawn = GameVars.FreedomSpawn
 
 		ent:SetPos( GameVars.FreedomSpawn )
 		ent:Spawn()
-		ent.Scale = GameVars.SZRadius
+		ent.Scale = GameVars.SZRadius*2
 		ent.PointID = pointnum --Adjusted by the spawn command, this adjusts the output signal.
 	end
 
@@ -527,7 +530,7 @@ local	storespawn = GameVars.FreedomSpawn
 
 		ent:SetPos( GameVars.DutySpawn )
 		ent:Spawn()
-		ent.Scale = GameVars.SZRadius
+		ent.Scale = GameVars.SZRadius*2
 		ent.PointID = pointnum --Adjusted by the spawn command, this adjusts the output signal.
 	end
 
