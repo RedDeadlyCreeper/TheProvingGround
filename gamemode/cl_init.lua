@@ -1,5 +1,5 @@
 include( 'shared.lua' )
-include( "PlayerAndHud/hud.lua" )--Do some change to refresh the hud 
+include( "baiknorii/gamemode/PlayerAndHud/hud.lua" )--Do some change to refresh the hud 
 
 
 function openTeamMenu()

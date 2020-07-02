@@ -24,7 +24,10 @@ gm_greenchoke
 
 *TODO*
 
+
+
 *Planned*
+Add automatic commendation system for player performance(kills/ton, capture time, etc)
 Anti AFK
 Game music
 Move weapon lists to their own folder for both client and sv
@@ -42,12 +45,12 @@ Add point name display
 
 GameVars = {}
 
-AddCSLuaFile( "Initializing/teamsetup.lua" )
-AddCSLuaFile( "Initializing/maplist_setup.lua" )
-AddCSLuaFile( "PlayerAndHud/hud.lua" )
+AddCSLuaFile( "baiknorii/gamemode/Initializing/teamsetup.lua" )
+AddCSLuaFile( "baiknorii/gamemode/Initializing/maplist_setup.lua" )
+AddCSLuaFile( "baiknorii/gamemode/PlayerAndHud/hud.lua" )
 
-include( "Initializing/teamsetup.lua" )
-include( "Initializing/maplist_setup.lua" )
+include( "baiknorii/gamemode/Initializing/teamsetup.lua" )
+include( "baiknorii/gamemode/Initializing/maplist_setup.lua" )
 
 DeriveGamemode("sandbox")
 	
@@ -78,6 +81,7 @@ end
 
 
 --Will create an error that can be ignored if playing SP, Low in priority to fix.
+if not CLIENT then
 util.AddNetworkString( "update_cappoints_freedom" )
 util.AddNetworkString( "update_cappoints_duty" )
 
@@ -86,7 +90,7 @@ util.AddNetworkString( "update_propcount_duty" )
 
 util.AddNetworkString( "update_weight_freedom" )
 util.AddNetworkString( "update_weight_duty" )
-
+end
 
 function GamemodeThinkingThing()
 
