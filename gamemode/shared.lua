@@ -35,7 +35,10 @@ Add support for non spherical safezones *shrug*
 Win sounds
 Mapvoting
 Add point name display
-
+Re-arm/Repair Stations
+Dupes can only be spawned in SZ
+Use bigger SZ designator prop.
+Name Indicators
 
 
 
@@ -156,7 +159,7 @@ function GamemodeThinkingThing()
 			if not inrange then
 				ply:GodDisable()
 
-				if ply:GetMoveType() == MOVETYPE_NOCLIP and (not ply:IsAdmin()) then --Kill non admins out of noclip, stops people from launching themselves out of SZ and rocketing people
+				if ply:GetMoveType() == MOVETYPE_NOCLIP and (not ply:IsAdmin()) and (not ply:InVehicle()) then --Kill non admins out of noclip, stops people from launching themselves out of SZ and rocketing people
 					ply:Kill()
 				end
 
@@ -192,14 +195,14 @@ function GamemodeThinkingThing()
 	if GameVars.PointsFree < 0 then
 
 --	EmitSound( "mvm/mvm_warning.wav", Vector(0,0,0), -2, CHAN_VOICE, 1, 75, 0, 100 )
-	PrintMessage(HUD_PRINTTALK, "Freedom has won the round!!!")
+	PrintMessage(HUD_PRINTTALK, "Duty has won the round!!!")
 	setupGamemode()
 	GameVars.WinsToRestart = GameVars.WinsToRestart - 1
 
 	elseif GameVars.PointsDuty < 0 then
 
 --	EmitSound( "mvm/mvm_warning.wav", Vector(0,0,0), -2, CHAN_VOICE, 1, 75, 0, 100 )
-	PrintMessage(HUD_PRINTTALK, "Duty has won the round!!!")
+	PrintMessage(HUD_PRINTTALK, "Freedom has won the round!!!")
 	setupGamemode()
 	GameVars.WinsToRestart = GameVars.WinsToRestart - 1
 
