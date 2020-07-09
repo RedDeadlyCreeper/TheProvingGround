@@ -7,4 +7,4 @@ folder located at
 Garrysmod/garrysmod/gamemodes
 
 use this link in your svn:
-"https://github.com/RedDeadlyCreeper/BaiknorII/trunk"
+"https://github.com/RedDeadlyCreeper/TheProvingGround/trunk"
