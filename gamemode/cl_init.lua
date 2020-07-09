@@ -1,5 +1,5 @@
 include( 'shared.lua' )
---include( "baiknorii/gamemode/playerandhud/hud.lua" )--Do some change to refresh the hud 
+--include( "baiknorii/gamemode/playerandhud/hud.lua" )--WHY WONT YOU WORK
 
 
 function openTeamMenu()
@@ -18,18 +18,17 @@ function openTeamMenu()
     team_1:SetSize( 100, 100 )
     team_1:SetText( "Freedom" )
     team_1.DoClick = function() --Make the player join team 1
-     
+        LocalPlayer():EmitSound( 'doors/doorstop1.wav' )     
         RunConsoleCommand( "team_change", 1 )
         frame:Close()
-        --print("Tried to go to freedom")
     end
-     
+    
     team_2 = vgui.Create( "DButton", frame )
     team_2:SetPos( frame:GetWide() / 2 + 150, frame:GetTall()/2 - 50) --Place it next to our previous one
     team_2:SetSize( 100, 100 )
     team_2:SetText( "Duty" )
     team_2.DoClick = function() --Make the player join team 2
-     
+        LocalPlayer():EmitSound( 'doors/doorstop1.wav' )
         RunConsoleCommand( "team_change", 2 )
         frame:Close()
      
@@ -40,7 +39,7 @@ function openTeamMenu()
     team_3:SetSize( 100, 100 )
     team_3:SetText( "Unassigned" )
     team_3.DoClick = function() --Make the player join team 2
-     
+        LocalPlayer():EmitSound( 'common/weapon_select.wav' )          
         RunConsoleCommand( "team_change", 0 )
         frame:Close()
 
@@ -153,7 +152,7 @@ function openLoadoutMenu()
     respawnbutton:SetSize( 125, 50 )
     respawnbutton:SetText( "Respawn" )
     respawnbutton.DoClick = function() --Make the player join team 2
-     
+        LocalPlayer():EmitSound( 'common/wpn_hudoff.wav' )   
         RunConsoleCommand( "kill")
         frame:Close()
 
@@ -165,7 +164,8 @@ concommand.Add( "loadout_menu", openLoadoutMenu )
 
 function GM:PlayerBindPress( ply, bind, pressed ) --Loadsa jank
     if ( bind == "gm_showteam" ) then RunConsoleCommand( "team_menu" ) end
-        if ( bind == "gm_showspare1" ) then RunConsoleCommand( "loadout_menu" ) end
+    if ( bind == "gm_showspare1" ) then RunConsoleCommand( "loadout_menu" ) end
+    if ( bind == "gm_showspare2" ) then RunConsoleCommand( "easy_entry" ) end --Press F4 to enter a vehicle easily
 end
 
 --    timer.Create( "HudRefreshThing", 5 , 0, HUD())
@@ -188,13 +188,13 @@ function HUD()
 
 if Team == 1 then
 
-	TeamColor = Color(0,200,0)
-	TeamPropCount = GameVars.PropsFreeCount or 0
-	TeamWeight = GameVars.WeightFreeCount/1000
+	TeamColor = Color(0,220,0)
+	TeamPropCount = GameVars.PropsGreenCount or 0
+	TeamWeight = GameVars.WeightGreenCount/1000
 elseif Team == 2 then
-	TeamColor = Color(200,0,0)
-	TeamPropCount = GameVars.PropsDutyCount or 0
-	TeamWeight = GameVars.WeightDutyCount/1000
+	TeamColor = Color(220,0,0)
+	TeamPropCount = GameVars.PropsRedCount or 0
+	TeamWeight = GameVars.WeightRedCount/1000
 else
 	TeamColor = Color(200,200,200)
 	TeamPropCount = 0	
@@ -203,7 +203,7 @@ end
 
 	--IK this is bad, I hate myself for doing this. Deal with it, its 3am. Better than 5 networked variables. Will prob make search occur every once in a while.
 
-	local points = ents.FindByClass( "baiknor_controlpoint" )
+	local points = ents.FindByClass( "tpg_controlpoint" )
 
 	for id, ent in pairs( points ) do
 
@@ -213,6 +213,9 @@ end
 --		if ( not data2D.visible ) then continue end
 
 	draw.RoundedBox(10, data2D.x-5, data2D.y-5, 13, 13, ent:GetColor())
+
+    draw.SimpleText( ""..(GameVars.PointNames[id] or "Error"), "Default", data2D.x-1, data2D.y-13, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
 
 	draw.RoundedBox(3,ScrW()/2-30*GameVars.PointCount/2+2+((id-1)*30), 70, 20, 20,ent:GetColor())
 
@@ -229,7 +232,8 @@ end
 --		if ( not data2D.visible ) then continue end
 
 	surface.SetDrawColor(TeamColor)
-	surface.DrawRect(data2D.x-5, data2D.y-5, 5, 5)
+	surface.DrawRect(data2D.x-5, data2D.y-5, 7, 7)
+    draw.SimpleText( ""..ent:Name(), "Default", data2D.x-1, data2D.y+10, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
 --		draw.SimpleText( ent.PointName, "Default", data2D.x, data2D.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
@@ -277,30 +281,141 @@ end )
 
 --concommand.Add( "team_menu", set_team )
 
-net.Receive("update_cappoints_freedom", function()
+net.Receive("update_cappoints_green", function()
 	GameVars.PointsFree = net.ReadInt(10) or -1
 --	print(GameVars.PointsFree)
 end)
 
-net.Receive("update_cappoints_duty", function()
+net.Receive("update_cappoints_red", function()
 	GameVars.PointsDuty = net.ReadInt(10) or -1
 --	print(GameVars.PointsDuty)
 end)
 
-net.Receive("update_propcount_freedom", function()
-	GameVars.PropsFreeCount = net.ReadInt(10) or -1
+net.Receive("update_propcount_green", function()
+	GameVars.PropsGreenCount = net.ReadInt(10) or -1
 end)
 
-net.Receive("update_propcount_duty", function()
-	GameVars.PropsDutyCount = net.ReadInt(12) or -1
+net.Receive("update_propcount_red", function()
+	GameVars.PropsRedCount = net.ReadInt(12) or -1
 end)
 
-net.Receive("update_weight_freedom", function()
-	GameVars.WeightFreeCount = net.ReadInt(13)*500 or -1
+net.Receive("update_weight_green", function()
+	GameVars.WeightGreenCount = net.ReadInt(13)*500 or -1
 --	print(GameVars.PointsFree)
 end)
 
-net.Receive("update_weight_duty", function()
-	GameVars.WeightDutyCount = net.ReadInt(13)*500 or -1
+net.Receive("update_weight_red", function()
+	GameVars.WeightRedCount = net.ReadInt(13)*500 or -1
 --	print(GameVars.PointsDuty)
 end)
+
+net.Receive( "chatmessage", function( len, ply ) --Wooo colored chat
+    chat.AddText( net.ReadColor(), net.ReadString() )
+end )
+
+
+
+
+
+
+hook.Add( "SpawnMenuOpen", "DisableSpawnMenuOutOfRange", function()
+
+	local searchteam = LocalPlayer():Team()
+
+	local points = ents.FindByClass( "tpg_safezonemarker" )
+
+    local inrange = 0
+
+    for id, ent in pairs( points ) do --Sometimes the client would forget the spawn location vars, my janky fix that doesnt use network vars.
+        if ((LocalPlayer():GetPos():Distance( ent:GetPos() )) < GameVars.SZRadius) then
+        inrange = inrange + 1
+        end
+    end
+
+--	if ( !inrange and !LocalPlayer():IsAdmin() ) then
+	if ( inrange < 1 ) then
+		chat.AddText( Color( 255, 0, 0 ), "[TPG] Cannot open spawn menu outside spawn.")
+			return false
+	end
+end )
+
+
+
+function openVotemapMenu()
+    
+    if (GameVars.VoteMapList[1] or "") != "" then
+    MapChoices = GameVars.VoteMapList or {"Map1", "Map2", "Map3", "Map4"}
+    else
+    MapChoices = {"Map1", "Map2", "Map3", "Map4"}
+    end
+
+    local frame = vgui.Create( "DFrame" )
+    frame:SetPos( 0+30, ScrH() / 2-300 ) --Set the window in the middle of the players screen/game window
+    frame:SetSize( 210, 450 ) --Set the size
+    frame:SetTitle( "Vote for next map" ) --Set title
+    frame:SetVisible( true )
+    frame:SetDraggable( false )
+    frame:ShowCloseButton( false )
+    frame:MakePopup()
+     
+    team_1 = vgui.Create( "DButton", frame )
+    team_1:SetPos( frame:GetWide() / 2-70 , frame:GetTall()/2 + 40) --Place it half way on the tall and 5 units in hirizontal
+    team_1:SetSize( 140, 50 )
+    team_1:SetText( MapChoices[3] )
+    team_1.DoClick = function() --Make the player join team 1
+        LocalPlayer():EmitSound( 'common/weapon_select.wav' )     
+        RunConsoleCommand( "tpg_votemap", 3 )
+        frame:Close()
+    end
+    
+    team_2 = vgui.Create( "DButton", frame )
+    team_2:SetPos( frame:GetWide() / 2-70 , frame:GetTall()/2 - 60) --Place it next to our previous one
+    team_2:SetSize( 140, 50 )
+    team_2:SetText( MapChoices[2] )
+    team_2.DoClick = function() --Make the player join team 2
+        LocalPlayer():EmitSound( 'common/weapon_select.wav' )     
+        RunConsoleCommand( "tpg_votemap", 2 )
+        frame:Close()
+     
+    end
+
+    team_3 = vgui.Create( "DButton", frame )
+    team_3:SetPos( frame:GetWide() / 2-70, frame:GetTall()/2 - 160) --Place it next to our previous one
+    team_3:SetSize( 140, 50 )
+    team_3:SetText( MapChoices[1] )
+    team_3.DoClick = function() --Make the player join team 2
+        LocalPlayer():EmitSound( 'common/weapon_select.wav' )          
+        RunConsoleCommand( "tpg_votemap", 1 )
+        frame:Close()
+
+    end
+
+    team_1 = vgui.Create( "DButton", frame )
+    team_1:SetPos( frame:GetWide() / 2-70 , frame:GetTall()/2 + 140) --Place it half way on the tall and 5 units in hirizontal
+    team_1:SetSize( 140, 50 )
+    team_1:SetText( MapChoices[4] )
+    team_1.DoClick = function() --Make the player join team 1
+        LocalPlayer():EmitSound( 'common/weapon_select.wav' )     
+        RunConsoleCommand( "tpg_votemap", 4 )
+        frame:Close()
+    end    
+
+    local textbox = vgui.Create("DLabel", frame)
+    textbox:SetPos(frame:GetWide() / 2-28 , frame:GetTall()/2 + 120)
+    textbox:SetText("Bonus Map")
+
+    local textbox = vgui.Create("DLabel", frame)
+    textbox:SetPos(frame:GetWide() / 2-27 , frame:GetTall()/2 - 180)
+    textbox:SetText("Open Map")  
+    
+    local textbox = vgui.Create("DLabel", frame)
+    textbox:SetPos(frame:GetWide() / 2-27 , frame:GetTall()/2 - 80)
+    textbox:SetText("Open Map")  
+
+    local textbox = vgui.Create("DLabel", frame)
+    textbox:SetPos(frame:GetWide() / 2-28 , frame:GetTall()/2 + 20)
+    textbox:SetText("Urban Map")  
+
+end
+    
+concommand.Add( "tpg_votemap_menu", openVotemapMenu )

@@ -1,7 +1,7 @@
 "BaiknorII"
 {
 	"base"		"sandbox"
-	"title"		"Baiknor II"
+	"title"		"The Proving Ground"
 	"maps"		"^gm_"
 	"menusystem"	"1"
 	"workshopid"	"15895"

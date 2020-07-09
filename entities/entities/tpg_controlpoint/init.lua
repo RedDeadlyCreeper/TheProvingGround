@@ -37,6 +37,7 @@ function ENT:Initialize()
 
 	if physObj:IsValid( ) then physObj:EnableMotion( false ) end
 
+	self:SetNotSolid( true )
 
 end
 
@@ -154,18 +155,52 @@ function ENT:Think()
 	testval = self.CapOwnership
 
 	if self.CapOwnership == 1 then
-	capOwner = "Freedom"
+	capOwner = "The Green Terror"
+	OwnerColor = Color( 0, 255, 0 )
 	elseif self.CapOwnership == -1 then
-	capOwner = "Duty"
+	capOwner = "The Red Menace"
+	OwnerColor = Color( 255, 0, 0 )
 	end
 
 	if self.CapLastState ~= testval then
 		if testval != 0 then
-			self:EmitSound(Sound("ambient/alarms/warningbell1.wav"), 100, 100, 1, CHAN_VOICE )	
-			PrintMessage(HUD_PRINTTALK, "Point ["..self.PointName.."] Has been captured by "..capOwner.."!")
+			self:EmitSound(Sound("ambient/alarms/warningbell1.wav"), 100, 100, 1, CHAN_VOICE ) --Local capsound
+
+			chatMessageGlobal( "Point ["..self.PointName.."] Has been captured by "..capOwner.."!" , OwnerColor )
+
+				local allplayers = player.GetAll()
+
+					if self.CapOwnership == 1 then
+						capTeam = 1
+					elseif self.CapOwnership == -1 then
+						capTeam = 2
+					end
+
+				for i, ply in ipairs( player.GetAll() ) do --Play an announcer capsound for every player
+			
+				if ply:Team() == capTeam then --Plays local sound for each player
+					ply:SendLua( "LocalPlayer():EmitSound( 'Announcer.Success' )" )
+
+					local dist = (ply:GetPos():Distance( self:GetPos() ))
+
+					--Capture Tracker
+					if dist < 600 then
+						GameVars.PlayerScoreTrackers[ply] = GameVars.PlayerScoreTrackers[ply] or {} --Create if table does not exist
+						GameVars.PlayerScoreTrackers[ply][4] = (GameVars.PlayerScoreTrackers[ply][4] or 0) + 1
+					end
+
+				else
+					ply:SendLua( "LocalPlayer():EmitSound( 'Announcer.Failure' )" )
+
+				end
+			
+			end
+
 		else
 			self:EmitSound(Sound("ambient/energy/whiteflash.wav"), 100, 100, 1, CHAN_VOICE )	
-			PrintMessage(HUD_PRINTTALK, "Point ["..self.PointName.."] Has been neutralized!")
+
+			chatMessageGlobal( "Point ["..self.PointName.."] Has been neutralized!" , Color( 0, 0, 0 ) )
+
 		end
 	end
 
