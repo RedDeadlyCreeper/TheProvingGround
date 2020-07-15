@@ -210,18 +210,25 @@ end
 		local point = ent:GetPos() + ent:OBBCenter() + Vector (0,0,100)
 		local data2D = point:ToScreen()
 
---		if ( not data2D.visible ) then continue end
+		--if ( not data2D.visible ) then continue end
 
-	draw.RoundedBox(10, data2D.x-5, data2D.y-5, 13, 13, ent:GetColor())
-
-    draw.SimpleText( ""..(GameVars.PointNames[id] or "Error"), "Default", data2D.x-1, data2D.y-13, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+	    draw.RoundedBox(10, data2D.x-5, data2D.y-5, 13, 13, ent:GetColor())
 
 
-	draw.RoundedBox(3,ScrW()/2-30*GameVars.PointCount/2+2+((id-1)*30), 70, 20, 20,ent:GetColor())
 
---		draw.SimpleText( ent.PointName, "Default", data2D.x, data2D.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+	    draw.RoundedBox(3,ScrW()/2-30*GameVars.PointCount/2+2+((id-1)*30), 70, 20, 20,ent:GetColor())
+
+		--draw.SimpleText( ent.PointName, "Default", data2D.x, data2D.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
 	end
+
+    for id = 1, GameVars.PointCount do
+		local point = GameVars.PointPositions[id] + Vector (0,0,100)
+		local data2D = point:ToScreen()
+        draw.SimpleText( ""..(GameVars.PointNames[id] or "Error"), "Default", data2D.x-1, data2D.y-13, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+    end
+--    PointPositions
 
 	points = team.GetPlayers(Team)
 
