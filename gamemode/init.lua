@@ -245,10 +245,18 @@ local	proplist = ArgTable[1]["EntityList"]
 
 	if delweight > 0.5 or delprops > 5 then --Makes 5ts able to spawn with a maxed weightlimit since neither of these should change the weight or proplimit. Also bypasses duplicator cooldown.
 
+	if delweight > 60 then
+		chatMessagePly(testplayer, "[TPG] Contraption exceeding 60T has been removed." , Color( 255, 0, 0 ) )	
+		for id, ent in pairs( proplist ) do
+			ent:Remove()
+		end
+
+	end
+
 	if testprops > GameVars.PropCountMax or testweight > GameVars.WeightLimit then
 --		print("OverOnProps")
 		chatMessagePly(testplayer, "[TPG] Contraption deleted due to going over limits" , Color( 255, 0, 0 ) )	
-		for id, ent in pairs( proplist ) do --Updates propcount and prop weight of each player
+		for id, ent in pairs( proplist ) do
 			ent:Remove()
 		end
 	
