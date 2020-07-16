@@ -99,7 +99,7 @@ GameVars.DupeWaitTime = {} --Used to keep track of player dupe spawn delays
 GameVars.GameThinkTick = 0 --Every 30 iterations the game thinks
 GameVars.Searchtick = 0 --Every 100 normal iterations do an entity search
 
-GameVars.PlayerSafezoneTime = {} --Used to allow players to have spawn protection after leaving the SZ
+--GameVars.PlayerSafezoneTime = {} --Used to allow players to have spawn protection after leaving the SZ
 
 GameVars.SeatEntities = {} --Also holds seat position and velocity information updated on gamethink.
 GameVars.TimeVars = {}
@@ -191,13 +191,14 @@ function GamemodeThinkingThing()
 					inrange = ((ply:GetPos():Distance( GameVars.DutySpawn )) < GameVars.SZRadius)
 					inenemyrange = ((ply:GetPos():Distance( GameVars.FreedomSpawn )) < GameVars.SZRadius)
 				else
-					inrange = 0
+					inrange = 1
 					inenemyrange = 0
 				end
 
 				
 			if not inrange then
-				
+
+				--[[
 				if (GameVars.PlayerSafezoneTime[ply] or 0) > 0 then
 
 						GameVars.PlayerSafezoneTime[ply] = (GameVars.PlayerSafezoneTime[ply] or 0) - 0.1
@@ -208,7 +209,6 @@ function GamemodeThinkingThing()
 					end
 
 				end
-
 
 				if ply:GetMoveType() == MOVETYPE_NOCLIP and (not ply:IsAdmin()) and (not ply:InVehicle()) then --Kill non admins out of noclip, stops people from launching themselves out of SZ and rocketing people
 					ply:Kill()
@@ -230,10 +230,10 @@ function GamemodeThinkingThing()
 					end
 					
 				end
-
+				]]--
 			else
 				ply:GodEnable()
-				GameVars.PlayerSafezoneTime[ply] = 5
+--				GameVars.PlayerSafezoneTime[ply] = 5
 			end
 
 		

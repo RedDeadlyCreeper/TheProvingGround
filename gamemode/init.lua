@@ -141,7 +141,7 @@ function GM:PlayerLoadout( ply )
 	
 	end
 	
-	GameVars.PlayerSafezoneTime[ply] = 5
+--	GameVars.PlayerSafezoneTime[ply] = 5
 --Loadout part
 
 if n == 0 then
