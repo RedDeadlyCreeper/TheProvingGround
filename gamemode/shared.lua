@@ -106,12 +106,6 @@ GameVars.TimeVars = {}
 GameVars.VoteMapList = {"Map1", "Map2", "Map3", "Map4"} --Populated at time of mapvoting
 GameVars.PlayerScoreTrackers = {} -- Holds all of the players in this array,
 --[1]Kills, [2]Kills/Ton, [3]Objective kills, [4]Captures
---
---For server owners who never set these.
-RunConsoleCommand( "sbox_godmode", "0" )
-RunConsoleCommand( "sbox_playershurtplayers", "1" )
-RunConsoleCommand( "sv_alltalk", "0" )
-RunConsoleCommand( "mp_falldamage", "1" )
 
 team.SetUp( 0, "Unasigned", Color( 255, 255, 255 ))
 team.SetUp( 1, "The Green Terror", Color( 0, 255, 0 ))
@@ -142,7 +136,15 @@ function GM:Initialize()
 	
 	self.BaseClass.Initialize( self )
 	if not CLIENT then
-		timer.Simple( 3, function() setupGamemode() end )
+		timer.Simple( 3, function() 
+			setupGamemode() 
+			--For server owners who never set these.
+	RunConsoleCommand( "sbox_godmode", "0" )
+	RunConsoleCommand( "sbox_playershurtplayers", "1" )
+	RunConsoleCommand( "sv_alltalk", "0" )
+	RunConsoleCommand( "mp_falldamage", "1" )
+
+		end )
 	end
 end
 
@@ -197,7 +199,7 @@ function GamemodeThinkingThing()
 
 				
 			if not inrange then
-
+				ply:GodDisable()
 				--[[
 				if (GameVars.PlayerSafezoneTime[ply] or 0) > 0 then
 
