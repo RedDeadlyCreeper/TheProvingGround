@@ -528,7 +528,6 @@ hook.Add( "PlayerDeath", "CommendationTracker", function( victim, inflictor, att
 		GameVars.PlayerScoreTrackers[attacker][2] = (GameVars.PlayerScoreTrackers[attacker][2] or 0) + (1 / math.max((plypropinfo[1] or 1),1) )
 
 			--Objective kills tracer
-			local bestent = nil
 			local bestdist = 99999999
 
 			local points = ents.FindByClass( "tpg_controlpoint" )
@@ -536,8 +535,7 @@ hook.Add( "PlayerDeath", "CommendationTracker", function( victim, inflictor, att
 			for id, ent in pairs( points ) do
 				local dist = (victim:GetPos():Distance( ent:GetPos() ))
 				if dist < bestdist then
-					bestent = dist
-					bestent = ent
+					bestdist = dist
 				end
 			end
 
@@ -545,7 +543,7 @@ hook.Add( "PlayerDeath", "CommendationTracker", function( victim, inflictor, att
 				GameVars.PlayerScoreTrackers[attacker][3] = (GameVars.PlayerScoreTrackers[attacker][3] or 0) + 1
 			end
 
-			local searchteam = attacker:Team()
+			local searchteam = attacker:Team() or 0
 
 			if searchteam == 1 then
 				inrange = ((attacker:GetPos():Distance( GameVars.FreedomSpawn )) < GameVars.SZRadius)
