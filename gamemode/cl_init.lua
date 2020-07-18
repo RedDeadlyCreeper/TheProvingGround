@@ -60,9 +60,8 @@ PrimaryWeaponsTable["m3super90"] = 5
 PrimaryWeaponsTable["xm1014"] = 6
 PrimaryWeaponsTable["p90"] = 7
 PrimaryWeaponsTable["tmp"] = 8
-PrimaryWeaponsTable["awp"] = 9
-PrimaryWeaponsTable["scout"] = 10
-PrimaryWeaponsTable["m249saw"] = 11
+PrimaryWeaponsTable["scout"] = 9
+PrimaryWeaponsTable["m249saw"] = 10
 
 
 
@@ -106,7 +105,6 @@ function openLoadoutMenu()
     DComboBox:AddChoice( "xm1014" )
     DComboBox:AddChoice( "p90" )
     DComboBox:AddChoice( "tmp" )
-    DComboBox:AddChoice( "awp" )
     DComboBox:AddChoice( "scout" )
     DComboBox:AddChoice( "m249saw" )
 

@@ -234,7 +234,7 @@ function GamemodeThinkingThing()
 				end
 				]]--
 			else
-				ply:GodEnable()
+--				ply:GodEnable()
 --				GameVars.PlayerSafezoneTime[ply] = 5
 			end
 

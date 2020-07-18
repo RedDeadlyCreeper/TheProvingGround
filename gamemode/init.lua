@@ -3,10 +3,10 @@ AddCSLuaFile( "shared.lua" )
 
 include( 'shared.lua' )
 
-function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server and spawns" function
+hook.Add( "PlayerInitialSpawn", "FullLoadSetup", function( ply ) --"When the player first joins the server and spawns" function
 
-	local FreeCount = (team.NumPlayers(1))
-	local DutyCount = (team.NumPlayers(2))
+	local FreeCount = team.NumPlayers(1) or 0
+	local DutyCount = team.NumPlayers(2) or 0
 
 	if FreeCount < DutyCount then --Unbalanced Teams autobalance free
 		ply:SetTeam( 1 )
@@ -21,7 +21,9 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 
 	ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
 
-end
+end)
+
+
 
 function GM:PlayerSetModel( ply ) --Double double check
 	ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
@@ -29,8 +31,8 @@ function GM:PlayerSetModel( ply ) --Double double check
 
 concommand.Add( "team_change", function( ply, cmd, args )
 
-	local FreeCount = (team.NumPlayers(1)) --If I remove the parenthesis the game sometimes reads just the variable 'team' and kills the script
-	local DutyCount = (team.NumPlayers(2)) --Honestly I don't know why, its confusing as hell but it happens sometime
+	local FreeCount = team.NumPlayers(1) or 0 --If I remove the parenthesis the game sometimes reads just the variable 'team' and kills the script
+	local DutyCount = team.NumPlayers(2) or 0 --Honestly I don't know why, its confusing as hell but it happens sometime
 
 	n = math.Round(args[1] or 0,0)
 --	print(teams[n].name)
@@ -98,9 +100,8 @@ PrimaryWeaponsTable[5] = "m3super90"
 PrimaryWeaponsTable[6] = "xm1014"
 PrimaryWeaponsTable[7] = "p90"
 PrimaryWeaponsTable[8] = "tmp"
-PrimaryWeaponsTable[9] = "awp"
-PrimaryWeaponsTable[10] = "scout"
-PrimaryWeaponsTable[11] = "m249saw"
+PrimaryWeaponsTable[9] = "scout"
+PrimaryWeaponsTable[10] = "m249saw"
 
 SecWeaponsTable = {}
 SecWeaponsTable[0] = "NoWeapon"
@@ -122,14 +123,9 @@ SpWeaponsTable[5] = "mines"
 
 function GM:PlayerLoadout( ply )
 	
-	ply:Give( "weapon_physgun" )
 	ply:Give( "gmod_camera" )
 
-	n = ply:Team()
-	ply:SetPlayerColor( teams[n].color )
-	ply:SetWeaponColor( teams[n].color )
-	
-	ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
+	n = ply:Team() or 0
 
 	if n == 1 then
 
@@ -138,7 +134,8 @@ function GM:PlayerLoadout( ply )
 	elseif n == 2 then
 
 		ply:SetPos( GameVars.DutySpawn )
-	
+	else
+		n = 0
 	end
 	
 --	GameVars.PlayerSafezoneTime[ply] = 5
@@ -148,23 +145,29 @@ if n == 0 then
 	 return true 
 end --Neutral shouldn't get weapons
 
+ply:SetPlayerColor( teams[n].color or Color(255,255,255) )
+ply:SetWeaponColor( teams[n].color or Color(255,255,255) )
+
+ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
+
+ply:Give( "weapon_physgun" )
 ply:Give( "gmod_tool" ) --Just so people dont dupe before joining a team.
 
 --Default loadout is an m16, no pistol, and an at-4, else set loadout to player sql
 
-PrimWep = ply:GetPData("Baik_PrimeWep", -1) --If you see this failz, this is the one thing i didnt want to change so servers dont have to overload the SQL file
+PrimWep = ply:GetPData("Baik_PrimeWep", -1) or -1 --If you see this failz, this is the one thing i didnt want to change so servers dont have to overload the SQL file
 if PrimWep == -1 then
 	ply:SetPData("Baik_PrimeWep",1)
 	PrimWep = 1
 end
 
-SecWep = ply:GetPData("Baik_SecWep", -1)
+SecWep = ply:GetPData("Baik_SecWep", -1) or -1
 if SecWep == -1 then
 	ply:SetPData("Baik_SecWep",0)
 	SecWep = 0
 end
 
-SpecWep = ply:GetPData("Baik_SpecWep", -1)
+SpecWep = ply:GetPData("Baik_SpecWep", -1) or -1
 if SpecWep == -1 then
 	ply:SetPData("Baik_SpecWep",1)
 	SpecWep = 1
@@ -208,11 +211,11 @@ local	wid = math.floor(args[2]) --Because sometimes an integer becomes a floatin
 --If you manually enter this in console and get a wrong value your stupid and I am not helping you if you enter it wrong.
 
 if wepclass == 1 then
-	ply:SetPData("Baik_PrimeWep",wid)
+	ply:SetPData("Baik_PrimeWep",wid or 1)
 elseif wepclass == 2 then
-	ply:SetPData("Baik_SecWep",wid)
+	ply:SetPData("Baik_SecWep",wid or 1)
 elseif wepclass == 3 then
-	ply:SetPData("Baik_SpecWep",wid)
+	ply:SetPData("Baik_SpecWep",wid or 1)
 end
 
 
@@ -220,7 +223,7 @@ end )
 
 function TestTeamLims(ArgTable) --Use the same arguments as the original function you're hooking to
 local	testplayer = ArgTable[1]["Player"]
-local	testteam = testplayer:Team()
+local	testteam = testplayer:Team() or 0
 local	proplist = ArgTable[1]["EntityList"]
 
 	if testteam == 1 then --Redundant but for deltas, deal with it.
@@ -507,6 +510,10 @@ end
 --[1]Kills, [2]Kills/Ton, [3]Objective kills
 
 hook.Add( "PlayerDeath", "CommendationTracker", function( victim, inflictor, attacker )
+
+	if victim == attacker then
+		return
+	end
 
 	local attackerIsPlayer = attacker:IsPlayer()
 
