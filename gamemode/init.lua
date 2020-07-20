@@ -94,22 +94,31 @@ PrimaryWeaponsTable = {}
 PrimaryWeaponsTable[0] = "NoWeapon"
 PrimaryWeaponsTable[1] = "m16"
 PrimaryWeaponsTable[2] = "ak47"
-PrimaryWeaponsTable[3] = "famas"
-PrimaryWeaponsTable[4] = "aug"
-PrimaryWeaponsTable[5] = "m3super90"
-PrimaryWeaponsTable[6] = "xm1014"
-PrimaryWeaponsTable[7] = "p90"
-PrimaryWeaponsTable[8] = "tmp"
-PrimaryWeaponsTable[9] = "scout"
-PrimaryWeaponsTable[10] = "m249saw"
+PrimaryWeaponsTable[3] = "galil"
+PrimaryWeaponsTable[4] = "famas"
+PrimaryWeaponsTable[5] = "aug"
+PrimaryWeaponsTable[6] = "sg552"
+PrimaryWeaponsTable[7] = "m3super90"
+PrimaryWeaponsTable[8] = "xm1014"
+PrimaryWeaponsTable[9] = "p90"
+PrimaryWeaponsTable[10] = "ump45"
+PrimaryWeaponsTable[11] = "mp5"
+PrimaryWeaponsTable[12] = "tmp"
+PrimaryWeaponsTable[13] = "mac10"
+PrimaryWeaponsTable[14] = "scout"
+PrimaryWeaponsTable[15] = "awp"
+PrimaryWeaponsTable[16] = "m249saw"
 
 SecWeaponsTable = {}
 SecWeaponsTable[0] = "NoWeapon"
 SecWeaponsTable[1] = "glock"
 SecWeaponsTable[2] = "fiveseven"
-SecWeaponsTable[3] = "deagle"
-SecWeaponsTable[4] = "grenade"
-SecWeaponsTable[5] = "weapon_medkit"
+SecWeaponsTable[3] = "p228"
+SecWeaponsTable[4] = "usp"
+SecWeaponsTable[5] = "deagle"
+SecWeaponsTable[6] = "elite"
+SecWeaponsTable[7] = "grenade"
+SecWeaponsTable[8] = "weapon_medkit"
 
 SpWeaponsTable = {}
 SpWeaponsTable[0] = "NoWeapon"
@@ -497,7 +506,7 @@ function tallyVotes()
 
 
 	RunConsoleCommand( "gamemode", "theprovingground" ) --Can never be too cautious
-	RunConsoleCommand( "map", GameVars.VoteMapList[bestvote] )
+	RunConsoleCommand( "changelevel", GameVars.VoteMapList[bestvote] )
 
 chatMessageGlobal( "[TPG] Changing to map ["..GameVars.VoteMapList[bestvote].."]" , Color( 0, 255, 0 ) )
 

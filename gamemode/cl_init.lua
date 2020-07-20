@@ -54,14 +54,20 @@ PrimaryWeaponsTable = {}
 PrimaryWeaponsTable["NoWeapon"] = 0
 PrimaryWeaponsTable["m16"] = 1
 PrimaryWeaponsTable["ak47"] = 2
-PrimaryWeaponsTable["famas"] = 3
-PrimaryWeaponsTable["aug"] = 4
-PrimaryWeaponsTable["m3super90"] = 5
-PrimaryWeaponsTable["xm1014"] = 6
-PrimaryWeaponsTable["p90"] = 7
-PrimaryWeaponsTable["tmp"] = 8
-PrimaryWeaponsTable["scout"] = 9
-PrimaryWeaponsTable["m249saw"] = 10
+PrimaryWeaponsTable["galil"] = 3
+PrimaryWeaponsTable["famas"] = 4
+PrimaryWeaponsTable["aug"] = 5
+PrimaryWeaponsTable["sg552"] = 6
+PrimaryWeaponsTable["m3super90"] = 7
+PrimaryWeaponsTable["xm1014"] = 8
+PrimaryWeaponsTable["p90"] = 9
+PrimaryWeaponsTable["ump45"] = 10
+PrimaryWeaponsTable["mp5"] = 11
+PrimaryWeaponsTable["tmp"] = 12
+PrimaryWeaponsTable["mac10"] = 13
+PrimaryWeaponsTable["scout"] = 14
+PrimaryWeaponsTable["awp"] = 15
+PrimaryWeaponsTable["m249saw"] = 16
 
 
 
@@ -69,9 +75,12 @@ SecWeaponsTable = {}
 SecWeaponsTable["NoWeapon"] = 0
 SecWeaponsTable["glock"] = 1
 SecWeaponsTable["fiveseven"] = 2
-SecWeaponsTable["deagle"] = 3
-SecWeaponsTable["grenade"] = 4
-SecWeaponsTable["medkit"] = 5
+SecWeaponsTable["p228"] = 3
+SecWeaponsTable["usp"] = 4
+SecWeaponsTable["deagle"] = 5
+SecWeaponsTable["elite"] = 6
+SecWeaponsTable["grenade"] = 7
+SecWeaponsTable["medkit"] = 8
 
 SpWeaponsTable = {}
 SpWeaponsTable["NoWeapon"] = 0
@@ -99,13 +108,19 @@ function openLoadoutMenu()
     DComboBox:AddChoice( "NoWeapon" )
     DComboBox:AddChoice( "m16" )
     DComboBox:AddChoice( "ak47" )
+    DComboBox:AddChoice( "galil" )
     DComboBox:AddChoice( "famas" )
     DComboBox:AddChoice( "aug" )
+    DComboBox:AddChoice( "sg552" )
     DComboBox:AddChoice( "m3super90" )
     DComboBox:AddChoice( "xm1014" )
     DComboBox:AddChoice( "p90" )
+    DComboBox:AddChoice( "ump45" )
+    DComboBox:AddChoice( "mp5" )
     DComboBox:AddChoice( "tmp" )
+    DComboBox:AddChoice( "mac10" )
     DComboBox:AddChoice( "scout" )
+    DComboBox:AddChoice( "awp" )
     DComboBox:AddChoice( "m249saw" )
 
     DComboBox.OnSelect = function( self, index, value )
@@ -120,7 +135,10 @@ function openLoadoutMenu()
     DComboBox:AddChoice( "NoWeapon" )
     DComboBox:AddChoice( "glock" )
     DComboBox:AddChoice( "fiveseven" )
+    DComboBox:AddChoice( "p228" )
+    DComboBox:AddChoice( "usp" )
     DComboBox:AddChoice( "deagle" )
+    DComboBox:AddChoice( "elite" )
     DComboBox:AddChoice( "grenade" )
     DComboBox:AddChoice( "medkit" )
 

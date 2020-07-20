@@ -99,7 +99,7 @@ GameVars.DupeWaitTime = {} --Used to keep track of player dupe spawn delays
 GameVars.GameThinkTick = 0 --Every 30 iterations the game thinks
 GameVars.Searchtick = 0 --Every 100 normal iterations do an entity search
 
---GameVars.PlayerSafezoneTime = {} --Used to allow players to have spawn protection after leaving the SZ
+GameVars.PlayerSafezoneTime = {} --Used to allow players to have spawn protection after leaving the SZ
 
 GameVars.SeatEntities = {} --Also holds seat position and velocity information updated on gamethink.
 GameVars.TimeVars = {}
@@ -199,8 +199,8 @@ function GamemodeThinkingThing()
 
 				
 			if not inrange then
-				ply:GodDisable()
-				--[[
+--				ply:GodDisable()
+
 				if (GameVars.PlayerSafezoneTime[ply] or 0) > 0 then
 
 						GameVars.PlayerSafezoneTime[ply] = (GameVars.PlayerSafezoneTime[ply] or 0) - 0.1
@@ -232,10 +232,10 @@ function GamemodeThinkingThing()
 					end
 					
 				end
-				]]--
+
 			else
---				ply:GodEnable()
---				GameVars.PlayerSafezoneTime[ply] = 5
+				ply:GodEnable()
+				GameVars.PlayerSafezoneTime[ply] = 5
 			end
 
 		
@@ -525,7 +525,8 @@ if MapName == "gm_construct" then
 	GameVars.SZRadius = 750
 	GameVars.PointPositions = {Vector(-2563,-1217,240),Vector(-2563,-417,240)}
 	GameVars.PointNames = {"Roof","Roof1"}
-
+	GameVars.WinsToRestart = 1
+	
 elseif MapName == "gm_baik_citycentre_v3" then
 	GameVars.FreedomSpawn = Vector(5280, 4760, 256)
 	GameVars.DutySpawn = Vector(-5280,-4760, 256)
