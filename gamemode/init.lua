@@ -283,7 +283,7 @@ local	proplist = ArgTable[1]["EntityList"]
 		end
 
 	else
-		local spawndelay = delweight*6 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
+		local spawndelay = delweight*4 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
 		GameVars.DupeWaitTime[testplayer] = CurTime() + spawndelay
 		chatMessagePly(testplayer, "[TPG] duplicator on cooldown for ["..math.ceil(spawndelay).."] seconds." , Color( 0, 255, 255 ) )	
 	end
