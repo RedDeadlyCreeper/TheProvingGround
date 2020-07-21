@@ -6,7 +6,7 @@ GM.Website 	= "N/A"
 
 
 --[[
-V1.1
+V1.3
 
 <--- Current Maplist --->
 

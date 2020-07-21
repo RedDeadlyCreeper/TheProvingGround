@@ -132,6 +132,7 @@ SpWeaponsTable[5] = "mines"
 
 function GM:PlayerLoadout( ply )
 	
+	ply:Give( "weapon_physgun" )
 	ply:Give( "gmod_camera" )
 
 	n = ply:Team() or 0
@@ -159,7 +160,7 @@ ply:SetWeaponColor( teams[n].color or Color(255,255,255) )
 
 ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
 
-ply:Give( "weapon_physgun" )
+
 ply:Give( "gmod_tool" ) --Just so people dont dupe before joining a team.
 
 --Default loadout is an m16, no pistol, and an at-4, else set loadout to player sql
