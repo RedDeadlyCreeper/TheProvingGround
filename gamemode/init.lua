@@ -279,8 +279,8 @@ local	proplist = ArgTable[1]["CreatedEntities"]
 
 	if delweight > 0.5 or delprops > 5 then --Makes 5ts able to spawn with a maxed weightlimit since neither of these should change the weight or proplimit. Also bypasses duplicator cooldown.
 
-	if delweight > 60 then
-		chatMessagePly(testplayer, "[TPG] Contraption exceeding 60T has been removed." , Color( 255, 0, 0 ) )	
+	if delweight > 65 then
+		chatMessagePly(testplayer, "[TPG] Contraption exceeding 65T has been removed." , Color( 255, 0, 0 ) )	
 		for id, ent in pairs( proplist ) do
 			ent:Remove()
 		end
