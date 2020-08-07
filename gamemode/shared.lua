@@ -41,20 +41,11 @@ gm_de_port_opened_v2
 
 *TODO*
 
-gm_baik_frontline -
-gm_baik_trenches -
-gm_baik_valley_split - 
-gm_diprip_village -
-gm_emp_bush -
-gm_greenland -
-gm_islandrain_v3 -
-gm_pacific_island_a3 -
-gm_baik_stalingrad -
-gm_bigcity_improved -
-gm_diprip_refinery -
-gm_emp_commandergrad -
-gm_freedom_city -
-gm_yanov -
+DONE - Fix team balancing
+Autobalance player with most kills
+DONE - Water kills players over time out of seats
+DONE - Auto uncloak
+DONE - Fixed mapvoting
 
 *Planned*
 
@@ -185,6 +176,10 @@ function GamemodeThinkingThing()
 			local allplayers = player.GetAll()
 		
 			for i, ply in ipairs( allplayers ) do --Reset each player table to 0
+
+				ply:SetColor( Color(255, 255, 255, 255) ) --Imagine having players make themselves invisible.
+				ply:SetMaterial("") --Some players used an invisible material, no fun for you.
+
 				local searchteam = ply:Team()
 				if searchteam == 1 then
 					inrange = ((ply:GetPos():Distance( GameVars.FreedomSpawn )) < GameVars.SZRadius)
@@ -195,6 +190,28 @@ function GamemodeThinkingThing()
 				else
 					inrange = 1
 					inenemyrange = 0
+				end
+
+
+				if not ply:GetVehicle():IsValid() then
+
+					if ply:WaterLevel() >= 2 then
+
+						ply:Kill()
+						chatMessagePly(ply, "[TPG] HALP I CANNOT SWIM!!!" , Color( 255, 0, 0 ) )
+	
+						if searchteam == 1 then
+	
+							ply:SetPos( GameVars.FreedomSpawn )
+					
+						elseif searchteam == 2 then
+					
+							ply:SetPos( GameVars.DutySpawn )
+						
+						end
+
+					end
+
 				end
 
 				
@@ -519,7 +536,7 @@ if MapName == "gm_construct" then
 	GameVars.FreedomSpawn = Vector(727,548,-143)
 	GameVars.DutySpawn = Vector(-4970,-3434,251)
 	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 400
+	GameVars.PropCountMax = 300
 	GameVars.PointCount = 2
 	GameVars.CapMul = 3 --Feel free to override this in map setup
 	GameVars.SZRadius = 750
@@ -530,7 +547,7 @@ if MapName == "gm_construct" then
 elseif MapName == "gm_baik_citycentre_v3" then
 	GameVars.FreedomSpawn = Vector(5280, 4760, 256)
 	GameVars.DutySpawn = Vector(-5280,-4760, 256)
-	GameVars.WeightLimit = 120
+	GameVars.WeightLimit = 80
 	GameVars.PropCountMax = 300
 	GameVars.PointCount = 2
 	GameVars.CapMul = 0.02	
@@ -551,8 +568,8 @@ elseif MapName == "gm_baik_coast_03" then
 elseif MapName == "gm_baik_coast_03_night" then
 	GameVars.FreedomSpawn = Vector(-4678, -5985, 501)
 	GameVars.DutySpawn = Vector(7312, 4011, 295)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 400
+	GameVars.WeightLimit = 160
+	GameVars.PropCountMax = 500
 	GameVars.PointCount = 2
 	GameVars.CapMul = 0.025	
 	GameVars.SZRadius = 750
@@ -561,8 +578,8 @@ elseif MapName == "gm_baik_coast_03_night" then
 elseif MapName == "gm_baik_construct_draft1" then
 	GameVars.FreedomSpawn = Vector(-3038, 3038, 17)
 	GameVars.DutySpawn = Vector(3038, -3038, 17)
-	GameVars.WeightLimit = 60
-	GameVars.PropCountMax = 250
+	GameVars.WeightLimit = 40
+	GameVars.PropCountMax = 200
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
 	GameVars.SZRadius = 750
@@ -571,7 +588,7 @@ elseif MapName == "gm_baik_construct_draft1" then
 elseif MapName == "gm_de_port_opened_v2" then --V1 not included
 	GameVars.FreedomSpawn = Vector(-1920, 3944, 513)
 	GameVars.DutySpawn = Vector(2245, -3674, 777)
-	GameVars.WeightLimit = 60
+	GameVars.WeightLimit = 40
 	GameVars.PropCountMax = 200
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
@@ -601,8 +618,8 @@ elseif MapName == "gm_emp_manticore" then
 elseif MapName == "gm_emp_midbridge" then
 	GameVars.FreedomSpawn = Vector(632, -9715, 2081)
 	GameVars.DutySpawn = Vector(-628, 9755, 2081)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 400
+	GameVars.WeightLimit = 160
+	GameVars.PropCountMax = 500
 	GameVars.PointCount = 4
 	GameVars.CapMul = 0.01	
 	GameVars.SZRadius = 750
@@ -611,7 +628,7 @@ elseif MapName == "gm_emp_midbridge" then
 elseif MapName == "gm_emp_palmbay" then
 	GameVars.FreedomSpawn = Vector(-6577, -8994, -2331)
 	GameVars.DutySpawn = Vector(8857, 10746, -2331)
-	GameVars.WeightLimit = 120
+	GameVars.WeightLimit = 80
 	GameVars.PropCountMax = 300
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
@@ -621,8 +638,8 @@ elseif MapName == "gm_emp_palmbay" then
 elseif MapName == "gm_greenchoke" then
 	GameVars.FreedomSpawn = Vector(-9156, 10610, 1038)
 	GameVars.DutySpawn = Vector(9055, -10722, 1038)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 400
+	GameVars.WeightLimit = 100
+	GameVars.PropCountMax = 300
 	GameVars.PointCount = 5
 	GameVars.CapMul = 0.01	
 	GameVars.SZRadius = 750
@@ -632,7 +649,7 @@ elseif MapName == "gm_baik_frontline" then
 	GameVars.FreedomSpawn = Vector(-9284, 357, -20)
 	GameVars.DutySpawn = Vector(6748, 485, -21)
 	GameVars.WeightLimit = 60
-	GameVars.PropCountMax = 250
+	GameVars.PropCountMax = 200
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
 	GameVars.SZRadius = 750
@@ -642,7 +659,7 @@ elseif MapName == "gm_baik_stalingrad" then
 	GameVars.FreedomSpawn = Vector(-1360, -8207, 1)
 	GameVars.DutySpawn = Vector(-1428, 2101, 1)
 	GameVars.WeightLimit = 80
-	GameVars.PropCountMax = 250
+	GameVars.PropCountMax = 300
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
 	GameVars.SZRadius = 750
@@ -652,7 +669,7 @@ elseif MapName == "gm_baik_trenches" then
 	GameVars.FreedomSpawn = Vector(3852,0,102)
 	GameVars.DutySpawn = Vector(-3852,0,102)
 	GameVars.WeightLimit = 60
-	GameVars.PropCountMax = 250
+	GameVars.PropCountMax = 300
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
 	GameVars.SZRadius = 750
@@ -661,8 +678,8 @@ elseif MapName == "gm_baik_trenches" then
 elseif MapName == "gm_baik_valley_split" then
 	GameVars.FreedomSpawn = Vector(-6285, -5632, 7)
 	GameVars.DutySpawn = Vector(6193, 723, 8)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 400
+	GameVars.WeightLimit = 80
+	GameVars.PropCountMax = 300
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02	
 	GameVars.SZRadius = 750
@@ -691,8 +708,8 @@ elseif MapName == "gm_diprip_refinery" then
 elseif MapName == "gm_diprip_village" then
 	GameVars.FreedomSpawn = Vector(5974, 3971, 7)
 	GameVars.DutySpawn = Vector(-8421, -11827, 185)
-	GameVars.WeightLimit = 80
-	GameVars.PropCountMax = 250
+	GameVars.WeightLimit = 60
+	GameVars.PropCountMax = 300
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02
 	GameVars.SZRadius = 750
@@ -712,7 +729,7 @@ elseif MapName == "gm_emp_commandergrad" then
 	GameVars.FreedomSpawn = Vector(3216, 12558, 9)
 	GameVars.DutySpawn = Vector(-7078, -13608, 9)
 	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 400
+	GameVars.PropCountMax = 300
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02
 	GameVars.SZRadius = 750
@@ -741,8 +758,8 @@ elseif MapName == "gm_greenland" then
 elseif MapName == "gm_islandrain_v3" then
 	GameVars.FreedomSpawn = Vector(-3831, 10741, -1200)
 	GameVars.DutySpawn = Vector(8391, -9920, -1175)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 400
+	GameVars.WeightLimit = 80
+	GameVars.PropCountMax = 300
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02
 	GameVars.SZRadius = 750
@@ -751,7 +768,7 @@ elseif MapName == "gm_islandrain_v3" then
 elseif MapName == "gm_pacific_island_a3" then
 	GameVars.FreedomSpawn = Vector(13995,8546,-10539)
 	GameVars.DutySpawn = Vector(636,13393,-10612)
-	GameVars.WeightLimit = 80
+	GameVars.WeightLimit = 60
 	GameVars.PropCountMax = 250
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02
@@ -761,7 +778,7 @@ elseif MapName == "gm_pacific_island_a3" then
 elseif MapName == "gm_toysoldiers" then
 	GameVars.FreedomSpawn = Vector(-5186,5086,-383)
 	GameVars.DutySpawn = Vector(5186,-5086,-383)
-	GameVars.WeightLimit = 100
+	GameVars.WeightLimit = 80
 	GameVars.PropCountMax = 300
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02
@@ -772,7 +789,7 @@ elseif MapName == "gm_yanov" then
 	GameVars.FreedomSpawn = Vector(-4246, -4855, 65)
 	GameVars.DutySpawn = Vector(-3856, 1488,65)
 	GameVars.WeightLimit = 60
-	GameVars.PropCountMax = 200
+	GameVars.PropCountMax = 250
 	GameVars.PointCount = 3
 	GameVars.CapMul = 0.02
 	GameVars.SZRadius = 750

@@ -21,6 +21,8 @@ hook.Add( "PlayerInitialSpawn", "FullLoadSetup", function( ply ) --"When the pla
 
 	ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
 
+	chatMessagePly(ply, "[TPG] Press F2 to change teams, press F3 to change loadout." , Color( 0, 255, 0 ) )
+
 end)
 
 
@@ -31,20 +33,33 @@ function GM:PlayerSetModel( ply ) --Double double check
 
 concommand.Add( "team_change", function( ply, cmd, args )
 
-	local FreeCount = team.NumPlayers(1) or 0 --If I remove the parenthesis the game sometimes reads just the variable 'team' and kills the script
-	local DutyCount = team.NumPlayers(2) or 0 --Honestly I don't know why, its confusing as hell but it happens sometime
+	local	testteam = ply:Team() or 0
+	local FreeCount = 0
+	local DutyCount = 0 
+
+	if testteam == 1 then --No unbalance 4 you
+		FreeCount = team.NumPlayers(1)-1 or 0 --If I remove the parenthesis the game sometimes reads just the variable 'team' and kills the script
+		DutyCount = team.NumPlayers(2) or 0 --Honestly I don't know why, its confusing as hell but it happens sometime
+	elseif testteam == 2 then
+		FreeCount = team.NumPlayers(1) or 0 --If I remove the parenthesis the game sometimes reads just the variable 'team' and kills the script
+		DutyCount = team.NumPlayers(2)-1 or 0 --Honestly I don't know why, its confusing as hell but it happens sometime
+	else
+		FreeCount = team.NumPlayers(1) or 0 --If I remove the parenthesis the game sometimes reads just the variable 'team' and kills the script
+		DutyCount = team.NumPlayers(2) or 0 --Honestly I don't know why, its confusing as hell but it happens sometime	
+	end
+
 
 	n = math.Round(args[1] or 0,0)
 --	print(teams[n].name)
 
-	if not teams[n] then print("Invalid Team") return end
+	if not teams[n] then print("[TPG] ERR: Invalid Team") return end
 
 	 if n == 1 and (FreeCount>DutyCount) then --Cannot manually unbalance teams
-		chatMessagePly(ply, "[TPG] Teams cannot be unbalanced. Assigned to The Red Menace" , Color( 255, 0, 0 ) )
-		n = 2
+		chatMessagePly(ply, "[TPG] Teams cannot be unbalanced." , Color( 255, 0, 0 ) )
+		return
 	 elseif n == 2 and (DutyCount>FreeCount) then
-		chatMessagePly(ply, "[TPG] Teams cannot be unbalanced. Assigned to The Green Terror" , Color( 255, 0, 0 ) )
-		n = 1
+		chatMessagePly(ply, "[TPG] Teams cannot be unbalanced." , Color( 255, 0, 0 ) )
+		return
 	 end
 
 
@@ -234,7 +249,7 @@ end )
 function TestTeamLims(ArgTable) --Use the same arguments as the original function you're hooking to
 local	testplayer = ArgTable[1]["Player"]
 local	testteam = testplayer:Team() or 0
-local	proplist = ArgTable[1]["EntityList"]
+local	proplist = ArgTable[1]["CreatedEntities"]
 
 	if testteam == 1 then --Redundant but for deltas, deal with it.
 	oldtestprops = GameVars.PropsGreenCount
@@ -242,6 +257,9 @@ local	proplist = ArgTable[1]["EntityList"]
 	elseif testteam == 2 then
 	oldtestprops = GameVars.PropsRedCount
 	oldtestweight = GameVars.WeightRedCount / 1000
+	else
+	oldtestprops = 0
+	oldtestweight = 0
 	end
 	updatePropcount(1)--Update propcount after dupefinish
 
@@ -251,6 +269,9 @@ local	proplist = ArgTable[1]["EntityList"]
 	elseif testteam == 2 then
 	testprops = GameVars.PropsRedCount
 	testweight = GameVars.WeightRedCount / 1000
+	else
+	testprops = 0
+	testweight = 0
 	end
 
 	local delweight = (testweight - oldtestweight)
@@ -463,7 +484,7 @@ end
 
 GameVars.PlayerVotes = {}
 concommand.Add( "tpg_votemap", function( ply, cmd, args )
-	GameVars.PlayerVotes[ply] = args[1]
+	GameVars.PlayerVotes[ply] =math.ceil(args[1])
 	chatMessageGlobal( "[TPG] "..ply:GetName().." voted for map ("..GameVars.VoteMapList[math.ceil(args[1])]..")" , Color( 0, 0, 255 ) )
 end)
 
@@ -480,13 +501,13 @@ function tallyVotes()
 		local vote = GameVars.PlayerVotes[ply] 
 
 		if vote == 1 then
-			Votes[1] = Votes1 + 1
+			Votes[1] = Votes[1] + 1
 		elseif vote == 2 then
-			Votes[2] = Votes2 + 1
+			Votes[2] = Votes[2] + 1
 		elseif vote == 3 then
-			Votes[3] = Votes3 + 1
+			Votes[3] = Votes[3] + 1
 		elseif vote == 4 then
-			Votes[4] = Votes4 + 1
+			Votes[4] = Votes[4] + 1
 		end
 	end
 	bestvote = math.ceil(1) --Change to integer
@@ -503,8 +524,11 @@ function tallyVotes()
 	end
 
 	print(bestvote)
-	print(GameVars.VoteMapList[bestvote])
-
+	print("BV: "..GameVars.VoteMapList[bestvote])
+	print("V1: "..Votes[1])
+	print("V2: "..Votes[2])
+	print("V3: "..Votes[3])
+	print("V4: "..Votes[4])
 
 	RunConsoleCommand( "gamemode", "theprovingground" ) --Can never be too cautious
 	RunConsoleCommand( "changelevel", GameVars.VoteMapList[bestvote] )
