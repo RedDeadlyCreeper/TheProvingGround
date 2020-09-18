@@ -261,39 +261,35 @@ local	proplist = ArgTable[1]["CreatedEntities"]
 	oldtestprops = 0
 	oldtestweight = 0
 	end
-	updatePropcount(1)--Update propcount after dupefinish
-
-	if testteam == 1 then --Get propcounts
-	testprops = GameVars.PropsGreenCount
-	testweight = GameVars.WeightGreenCount / 1000
-	elseif testteam == 2 then
-	testprops = GameVars.PropsRedCount
-	testweight = GameVars.WeightRedCount / 1000
-	else
+	
 	testprops = 0
 	testweight = 0
+	for id, ent in pairs( proplist ) do
+		if ent:IsValid() then
+			testprops = testprops + 1
+			testweight = testweight + (ent:GetPhysicsObject():GetMass())/1000
+		end
 	end
+	
+--	print("TP: "..testprops)
+--	print("TW: "..testweight)
 
-	local delweight = (testweight - oldtestweight)
-	local delprops = (testprops - oldtestprops)
+	if testweight > 0.5 or testprops > 5 then --Makes 5ts able to spawn with a maxed weightlimit since neither of these should change the weight or proplimit. Also bypasses duplicator cooldown.
 
-	if delweight > 0.5 or delprops > 5 then --Makes 5ts able to spawn with a maxed weightlimit since neither of these should change the weight or proplimit. Also bypasses duplicator cooldown.
-
-	if delweight > 65 then
+	if testweight > 65 then
+		print("TW: "..testweight)
 		chatMessagePly(testplayer, "[TPG] Contraption exceeding 65T has been removed." , Color( 255, 0, 0 ) )	
 		for id, ent in pairs( proplist ) do
 			ent:Remove()
 		end
+	elseif (testprops+oldtestprops) > GameVars.PropCountMax or (testweight+oldtestweight) > GameVars.WeightLimit then
+--		print("TW: "..testweight)
 
-	end
-
-	if testprops > GameVars.PropCountMax or testweight > GameVars.WeightLimit then
 --		print("OverOnProps")
 		chatMessagePly(testplayer, "[TPG] Contraption deleted due to going over limits" , Color( 255, 0, 0 ) )	
 		for id, ent in pairs( proplist ) do
 			ent:Remove()
 		end
-	
 	elseif CurTime() < (GameVars.DupeWaitTime[testplayer] or 0) then
 
 		local waitdelay = GameVars.DupeWaitTime[testplayer]-CurTime()
@@ -304,9 +300,10 @@ local	proplist = ArgTable[1]["CreatedEntities"]
 		end
 
 	else
-		local spawndelay = delweight*4 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
+		local spawndelay = testweight*4 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
 		GameVars.DupeWaitTime[testplayer] = CurTime() + spawndelay
 		chatMessagePly(testplayer, "[TPG] duplicator on cooldown for ["..math.ceil(spawndelay).."] seconds." , Color( 0, 255, 255 ) )	
+		updatePropcount(1)--Update propcount after dupefinish
 	end
 	
 	else --Lightweight vehicle

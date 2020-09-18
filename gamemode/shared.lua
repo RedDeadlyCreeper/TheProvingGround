@@ -218,9 +218,14 @@ function GamemodeThinkingThing()
 			if not inrange then
 --				ply:GodDisable()
 
-				if (GameVars.PlayerSafezoneTime[ply] or 0) > 0 then
+local SZT = GameVars.PlayerSafezoneTime[ply] or 0
+				if SZT > 0 then
+					
+					if SZT == 5 then --Truly stops people from flinging themselves outside SZ
+						ply:SetVelocity(Vector(0))
+					end
 
-						GameVars.PlayerSafezoneTime[ply] = (GameVars.PlayerSafezoneTime[ply] or 0) - 0.1
+						GameVars.PlayerSafezoneTime[ply] = SZT - 0.1
 					if GameVars.PlayerSafezoneTime[ply] <= 0 then
 						GameVars.PlayerSafezoneTime[ply] = 0 --Value when SP is off
 						chatMessagePly(ply, "[TPG] Your spawn protection wore off. SpawnMenu is disabled. You can now do damage." , Color( 0, 255, 255 ) )
@@ -997,13 +1002,14 @@ GameVars.SeatEntities[id]["Vel"] = (GameVars.SeatEntities[id]["Pos"]-lastPos) / 
 
 local Accel = (GameVars.SeatEntities[id]["Vel"]-lastVel) / Deltime --Change in velocity
 --19291*4
-if Accel:Length() > (7716400) then --Pulling about 50g. If you pull this hard you should get something checked out.
+--7716400 old
+if Accel:Length() > (129921) then --Pulling about 50g. If you pull this hard you should get something checked out.
 	print(Accel:Length())
 	Driver = ent:GetDriver()
 	if IsValid(Driver) then
 	Driver:ExitVehicle()
 	Driver:Kill()
-	chatMessagePly(Driver, "[TPG] Exceeded G-Limit." , Color( 255, 0, 0 ) )
+	chatMessagePly(Driver, "[TPG] Exceeded G-Limit of 50Gs." , Color( 255, 0, 0 ) )
 	end
 
 elseif lastVel:Length() > 3500 then
