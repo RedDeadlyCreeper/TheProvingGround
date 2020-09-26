@@ -222,7 +222,7 @@ local SZT = GameVars.PlayerSafezoneTime[ply] or 0
 				if SZT > 0 then
 					
 					if SZT == 5 then --Truly stops people from flinging themselves outside SZ
-						ply:SetVelocity(Vector(0))
+						ply:SetVelocity(-ply:GetVelocity()) --Setting player velocity is wierd
 					end
 
 						GameVars.PlayerSafezoneTime[ply] = SZT - 0.1

@@ -266,7 +266,11 @@ local	proplist = ArgTable[1]["CreatedEntities"]
 	testweight = 0
 	for id, ent in pairs( proplist ) do
 		if ent:IsValid() then
-			testprops = testprops + 1
+
+			if ent:GetClass() == "prop_physics" then
+				testprops = testprops + 1
+			end
+			
 			testweight = testweight + (ent:GetPhysicsObject():GetMass())/1000
 		end
 	end
@@ -282,14 +286,24 @@ local	proplist = ArgTable[1]["CreatedEntities"]
 		for id, ent in pairs( proplist ) do
 			ent:Remove()
 		end
-	elseif (testprops+oldtestprops) > GameVars.PropCountMax or (testweight+oldtestweight) > GameVars.WeightLimit then
---		print("TW: "..testweight)
+	elseif (testprops+oldtestprops) > GameVars.PropCountMax then
+			--		print("TW: "..testweight)
 
---		print("OverOnProps")
-		chatMessagePly(testplayer, "[TPG] Contraption deleted due to going over limits" , Color( 255, 0, 0 ) )	
-		for id, ent in pairs( proplist ) do
-			ent:Remove()
-		end
+			--		print("OverOnProps")
+					chatMessagePly(testplayer, "[TPG] Contraption deleted due to going over prop limit" , Color( 255, 0, 0 ) )	
+					for id, ent in pairs( proplist ) do
+						ent:Remove()
+					end
+	elseif (testweight+oldtestweight) > GameVars.WeightLimit then
+
+			--		print("TW: "..testweight)
+
+			--		print("OverOnProps")
+			chatMessagePly(testplayer, "[TPG] Contraption deleted due to going over weight limit" , Color( 255, 0, 0 ) )	
+			for id, ent in pairs( proplist ) do
+				ent:Remove()
+			end
+
 	elseif CurTime() < (GameVars.DupeWaitTime[testplayer] or 0) then
 
 		local waitdelay = GameVars.DupeWaitTime[testplayer]-CurTime()
@@ -300,7 +314,7 @@ local	proplist = ArgTable[1]["CreatedEntities"]
 		end
 
 	else
-		local spawndelay = testweight*4 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
+		local spawndelay = testweight*3 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
 		GameVars.DupeWaitTime[testplayer] = CurTime() + spawndelay
 		chatMessagePly(testplayer, "[TPG] duplicator on cooldown for ["..math.ceil(spawndelay).."] seconds." , Color( 0, 255, 255 ) )	
 		updatePropcount(1)--Update propcount after dupefinish
