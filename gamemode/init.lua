@@ -19,17 +19,58 @@ hook.Add( "PlayerInitialSpawn", "FullLoadSetup", function( ply ) --"When the pla
 		ply:ConCommand( "team_menu" )
 	end
 
-	ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
+	EqArmor = ply:GetPData("Baik_Armor", -1) or -1
+	if EqArmor == -1 then
+		ply:SetPData("Baik_Armor",1)
+		EqArmor = 1
+	end
+	local eqArmorString = ArmorTable[math.floor(EqArmor)]
+	local model = "models/player/Group03/Male_0"..math.random(1,9)..".mdl"
+	if eqArmorString == "None" then
+		model = "models/player/Group01/Male_0"..math.random(1,9)..".mdl"
+	elseif eqArmorString == "Light"  then
+		model = "models/player/Group03/Male_0"..math.random(1,9)..".mdl"
+	elseif eqArmorString == "Medium"  then
+		model = "models/player/barney.mdl"
+	elseif eqArmorString == "Heavy"  then
+		model = "models/player/police.mdl"
+	elseif eqArmorString == "Juggernaut"  then
+		model = "models/player/combine_super_soldier.mdl"
+	end
+	ply:SetModel( model)
 
-	chatMessagePly(ply, "[TPG] Press F2 to change teams, press F3 to change loadout." , Color( 0, 255, 0 ) )
+	ply:SetWalkSpeed( 200 ) --RIP in nerf
+	ply:SetRunSpeed( 350 ) --RIP in nerf
+
+	chatMessagePly(ply, "[TPG] Press F2 to change teams, press F3 to change loadout, press F4 to enter a nearby vehicle you are looking at." , Color( 0, 255, 0 ) )
+
+	ply:SendLua( "LocalPlayer():EmitSound( 'garrysmod/save_load1.wav' )" )
 
 end)
 
 
 
 function GM:PlayerSetModel( ply ) --Double double check
-	ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
- end
+	EqArmor = ply:GetPData("Baik_Armor", -1) or -1
+	if EqArmor == -1 then
+		ply:SetPData("Baik_Armor",1)
+		EqArmor = 1
+	end
+	local eqArmorString = ArmorTable[math.floor(EqArmor)]
+	local model = "models/player/Group03/Male_0"..math.random(1,9)..".mdl"
+	if eqArmorString == "None" then
+		model = "models/player/Group01/Male_0"..math.random(1,9)..".mdl"
+	elseif eqArmorString == "Light"  then
+		model = "models/player/Group03/Male_0"..math.random(1,9)..".mdl"
+	elseif eqArmorString == "Medium"  then
+		model = "models/player/barney.mdl"
+	elseif eqArmorString == "Heavy"  then
+		model = "models/player/police.mdl"
+	elseif eqArmorString == "Juggernaut"  then
+		model = "models/player/combine_super_soldier.mdl"
+	end
+	ply:SetModel( model)
+end
 
 concommand.Add( "team_change", function( ply, cmd, args )
 
@@ -69,7 +110,25 @@ concommand.Add( "team_change", function( ply, cmd, args )
 	ply:SetPlayerColor( teams[n].color)
 	ply:SetWeaponColor( teams[n].color )
 	
-	ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
+	EqArmor = ply:GetPData("Baik_Armor", -1) or -1
+	if EqArmor == -1 then
+		ply:SetPData("Baik_Armor",1)
+		EqArmor = 1
+	end
+	local eqArmorString = ArmorTable[math.floor(EqArmor)]
+	local model = "models/player/Group03/Male_0"..math.random(1,9)..".mdl"
+	if eqArmorString == "None" then
+		model = "models/player/Group01/Male_0"..math.random(1,9)..".mdl"
+	elseif eqArmorString == "Light"  then
+		model = "models/player/Group03/Male_0"..math.random(1,9)..".mdl"
+	elseif eqArmorString == "Medium"  then
+		model = "models/player/barney.mdl"
+	elseif eqArmorString == "Heavy"  then
+		model = "models/player/police.mdl"
+	elseif eqArmorString == "Juggernaut"  then
+		model = "models/player/combine_super_soldier.mdl"
+	end
+	ply:SetModel( model)
 
 	print( "["..ply:Nick().. "] has been assigned to team ["..teams[n].name.."]" )
 	chatMessagePly(ply, "You have joined team ["..teams[n].name.."]" , Color( 0, 255, 255 ) )	
@@ -83,6 +142,8 @@ concommand.Add( "team_change", function( ply, cmd, args )
 		ply:SetPos( GameVars.DutySpawn )
 	
 	end
+
+	chatMessagePly(ply, "[TPG] Press F2 to change teams, press F3 to change loadout, press F4 to enter a nearby vehicle you are looking at." , Color( 0, 255, 0 ) )
 
 end )
 
@@ -144,6 +205,12 @@ SpWeaponsTable[4] = "xm25"
 SpWeaponsTable[5] = "mines"
 
 
+ArmorTable = {}
+ArmorTable[0] = "None"
+ArmorTable[1] = "Light"
+ArmorTable[2] = "Medium"
+ArmorTable[3] = "Heavy"
+ArmorTable[4] = "Juggernaut"
 
 function GM:PlayerLoadout( ply )
 	
@@ -173,8 +240,7 @@ end --Neutral shouldn't get weapons
 ply:SetPlayerColor( teams[n].color or Color(255,255,255) )
 ply:SetWeaponColor( teams[n].color or Color(255,255,255) )
 
-ply:SetModel( "models/player/Group03/Male_0"..math.random(1,9)..".mdl")
-
+ply:SendLua( "LocalPlayer():EmitSound( 'weapons/ar2/npc_ar2_reload.wav' )" )
 
 ply:Give( "gmod_tool" ) --Just so people dont dupe before joining a team.
 
@@ -198,30 +264,76 @@ if SpecWep == -1 then
 	SpecWep = 1
 end
 
+EqArmor = ply:GetPData("Baik_Armor", -1) or -1
+if EqArmor == -1 then
+	ply:SetPData("Baik_Armor",1)
+	EqArmor = 1
+end
+
 
 local pWepString = PrimaryWeaponsTable[math.floor(PrimWep)]
 local sWepString = SecWeaponsTable[math.floor(SecWep)]
 local spWepString = SpWeaponsTable[math.floor(SpecWep)]
-local hp = 75 --75 is lowest hp you get for having all weapon types
+local eqArmorString = ArmorTable[math.floor(EqArmor)]
+local speed = 50 --50 percent is slowest speed you can get from weapons
 
-if pWepString == "NoWeapon" then hp = hp + 25 else
+if pWepString == "NoWeapon" then speed = speed + 20 else
 	ply:Give( pWepString )
-end --Adds 50 hp for forgoing a primary weapon
+end --Adds 20% speed for forgoing a primary weapon
 
-if sWepString == "NoWeapon" then hp = hp + 10 else
+if sWepString == "NoWeapon" then speed = speed + 10 else
 	ply:Give( sWepString )
-end --Adds 25 hp for forgoing a secondary weapon
+end --Adds 10% speed for forgoing a secondary weapon
 
-if spWepString == "NoWeapon" then hp = hp + 40 elseif spWepString == "mines" then
+if spWepString == "NoWeapon" then --Adds 30% speed for forgoing a special weapon
+	speed = speed + 30 
+elseif spWepString == "mines" then
 	ply:Give( "antipersonmine" )
 	ply:Give( "boundingmine" )
 	ply:Give( "antitankmine" )
 else
 	ply:Give( spWepString )	
-end --Adds 75 hp for forgoing a special weapon
+end
+
+local hp = 100
+local armor = 25
+
+local model = "models/player/Group03/Male_0"..math.random(1,9)..".mdl"
+
+if eqArmorString == "None" then
+	hp = 50
+	armor = 0
+	speed = speed + 10 
+	model = "models/player/Group01/Male_0"..math.random(1,9)..".mdl"
+elseif eqArmorString == "Light"  then
+	hp = 75
+	armor = 50
+	speed = speed + 0 
+	model = "models/player/Group03/Male_0"..math.random(1,9)..".mdl"
+elseif eqArmorString == "Medium"  then
+	hp = 100
+	armor = 120
+	speed = speed - 10 
+	model = "models/player/barney.mdl"
+elseif eqArmorString == "Heavy"  then
+	hp = 125
+	armor = 200
+	speed = speed - 15 
+	model = "models/player/police.mdl"
+elseif eqArmorString == "Juggernaut"  then
+	hp = 500
+	armor = 999999
+	speed = speed - 35 
+	model = "models/player/combine_super_soldier.mdl"
+end
+
+ply:SetModel( model)
 
 ply:SetHealth(hp)
 ply:SetMaxHealth(hp)
+ply:SetArmor(armor)
+ply:SetWalkSpeed( (speed/100)*200 ) --RIP in nerf
+ply:SetRunSpeed( (speed/100)*350 ) --RIP in nerf
 
 --End of loadouts
 
@@ -241,33 +353,57 @@ elseif wepclass == 2 then
 	ply:SetPData("Baik_SecWep",wid or 1)
 elseif wepclass == 3 then
 	ply:SetPData("Baik_SpecWep",wid or 1)
+elseif wepclass == 4 then
+	ply:SetPData("Baik_Armor",wid or 1)
 end
+
 
 
 end )
 
 function TestTeamLims(ArgTable) --Use the same arguments as the original function you're hooking to
-local	testplayer = ArgTable[1]["Player"]
-local	testteam = testplayer:Team() or 0
-local	proplist = ArgTable[1]["CreatedEntities"]
+
+	local	testplayer = ArgTable[1]["Player"]
+	local	testteam = testplayer:Team() or 0
+	local	proplist = ArgTable[1]["CreatedEntities"]
 
 	if testteam == 1 then --Redundant but for deltas, deal with it.
-	oldtestprops = GameVars.PropsGreenCount
-	oldtestweight = GameVars.WeightGreenCount / 1000
+		oldtestprops = GameVars.PropsGreenCount
+		oldtestweight = GameVars.WeightGreenCount / 1000
 	elseif testteam == 2 then
-	oldtestprops = GameVars.PropsRedCount
-	oldtestweight = GameVars.WeightRedCount / 1000
+		oldtestprops = GameVars.PropsRedCount
+		oldtestweight = GameVars.WeightRedCount / 1000
 	else
-	oldtestprops = 0
-	oldtestweight = 0
+		oldtestprops = 0
+		oldtestweight = 0
 	end
 	
-	testprops = 0
-	testweight = 0
-	for id, ent in pairs( proplist ) do
-		if ent:IsValid() then
+		testprops = 0
+		testweight = 0
+		local noValid = 0
+		local class = nil
 
-			if ent:GetClass() == "prop_physics" then
+	for id, ent in pairs( proplist ) do
+		noValid = 0
+
+		if not ent:IsValid() then
+			noValid = 1
+--			print("NoValid")
+		else
+			class = ent:GetClass()
+		end
+		
+		if class == "acf_ammo" then
+--			print("Ammo")
+			if ent.BulletData.Type == "Refill" then
+--				print("Refill")
+				noValid = 1
+			end
+		end
+
+		if noValid == 0 then
+
+			if class == "prop_physics" then
 				testprops = testprops + 1
 			end
 			
@@ -276,50 +412,91 @@ local	proplist = ArgTable[1]["CreatedEntities"]
 	end
 	
 --	print("TP: "..testprops)
---	print("TW: "..testweight)
+	print("TW: "..testweight)
 
-	if testweight > 0.5 or testprops > 5 then --Makes 5ts able to spawn with a maxed weightlimit since neither of these should change the weight or proplimit. Also bypasses duplicator cooldown.
-
-	if testweight > 65 then
-		print("TW: "..testweight)
-		chatMessagePly(testplayer, "[TPG] Contraption exceeding 65T has been removed." , Color( 255, 0, 0 ) )	
-		for id, ent in pairs( proplist ) do
-			ent:Remove()
-		end
-	elseif (testprops+oldtestprops) > GameVars.PropCountMax then
-			--		print("TW: "..testweight)
-
-			--		print("OverOnProps")
-					chatMessagePly(testplayer, "[TPG] Contraption deleted due to going over prop limit" , Color( 255, 0, 0 ) )	
-					for id, ent in pairs( proplist ) do
-						ent:Remove()
-					end
-	elseif (testweight+oldtestweight) > GameVars.WeightLimit then
-
-			--		print("TW: "..testweight)
-
-			--		print("OverOnProps")
-			chatMessagePly(testplayer, "[TPG] Contraption deleted due to going over weight limit" , Color( 255, 0, 0 ) )	
+	if testweight > 10 or testprops > 140 then --Makes 5ts able to spawn with a maxed weightlimit since neither of these should change the weight or proplimit. Also bypasses duplicator cooldown.
+			--5.5T for light vehicle leniency. Don't abuse it playerbase!!!
+		if testweight > 65 then
+			print("TW: "..testweight)
+			chatMessagePly(testplayer, "[TPG] Contraption exceeding 65T has been removed." , Color( 255, 0, 0 ) )	
 			for id, ent in pairs( proplist ) do
 				ent:Remove()
 			end
+		elseif (testprops+oldtestprops) > GameVars.PropCountMax then
+				--		print("TW: "..testweight)
 
-	elseif CurTime() < (GameVars.DupeWaitTime[testplayer] or 0) then
+				--		print("OverOnProps")
+						chatMessagePly(testplayer, "[TPG] Contraption deleted due to going over prop limit" , Color( 255, 0, 0 ) )	
+						for id, ent in pairs( proplist ) do
+							ent:Remove()
+						end
+		elseif (testweight+oldtestweight) > GameVars.WeightLimit then
 
-		local waitdelay = GameVars.DupeWaitTime[testplayer]-CurTime()
+				--		print("TW: "..testweight)
 
-		chatMessagePly(testplayer, "[TPG] Contraption removed. duplicator still on cooldown for ["..math.ceil(waitdelay).."] seconds." , Color( 255, 0, 0 ) )	
-		for id, ent in pairs( proplist ) do --Updates propcount and prop weight of each player
-			ent:Remove()
+				--		print("OverOnProps")
+				chatMessagePly(testplayer, "[TPG] Contraption deleted due to going over weight limit" , Color( 255, 0, 0 ) )	
+				for id, ent in pairs( proplist ) do
+					ent:Remove()
+				end
+
+		elseif CurTime() < (GameVars.DupeWaitTime[testplayer] or 0) then
+
+			local waitdelay = GameVars.DupeWaitTime[testplayer]-CurTime()
+
+			chatMessagePly(testplayer, "[TPG] Contraption removed. duplicator still on cooldown for ["..math.ceil(waitdelay).."] seconds." , Color( 255, 0, 0 ) )	
+			for id, ent in pairs( proplist ) do --Updates propcount and prop weight of each player
+				ent:Remove()
+			end
+
+		else
+
+			chatMessagePly(testplayer, "[TPG] 60 second duplicator grace period." , Color( 0, 255, 0 ) )				
+
+			timer.Simple( 5, function()
+
+				testweight = 0
+
+				for id, ent in pairs( proplist ) do --I'm sorry server. FORGIVE ME!!!
+					noValid = 0
+			
+					if ent:IsValid() then
+						class = ent:GetClass()
+			--			print("NoValid")
+					else
+						noValid = 1
+					end
+					
+					if class == "acf_ammo" then
+			--			print("Ammo")
+						if ent.BulletData.Type == "Refill" then
+			--				print("Refill")
+							noValid = 1
+						end
+					end
+			
+					if noValid == 0 then
+						
+						testweight = testweight + (ent:GetPhysicsObject():GetMass())/1000
+					end
+				end
+
+				local spawndelay = testweight*3 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
+
+				local TestNewSpawnTime = (GameVars.TimeVars["Time"] or 0) + spawndelay
+				if TestNewSpawnTime > (GameVars.DupeWaitTime[testplayer] or 0) then
+					
+					GameVars.DupeWaitTime[testplayer] = TestNewSpawnTime
+
+				end
+				chatMessagePly(testplayer, "[TPG] duplicator on cooldown for ["..math.ceil(spawndelay).."] seconds." , Color( 0, 255, 255 ) )	
+			end)
+
+			updatePropcount(1)--Update propcount after dupefinish
 		end
 
-	else
-		local spawndelay = testweight*3 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
-		GameVars.DupeWaitTime[testplayer] = CurTime() + spawndelay
-		chatMessagePly(testplayer, "[TPG] duplicator on cooldown for ["..math.ceil(spawndelay).."] seconds." , Color( 0, 255, 255 ) )	
-		updatePropcount(1)--Update propcount after dupefinish
-	end
-	
+
+
 	else --Lightweight vehicle
 
 		chatMessagePly(testplayer, "[TPG] Light vehicle spawned, duplicator cooldown bypassed." , Color( 0, 255, 255 ) )	
@@ -607,4 +784,48 @@ hook.Add( "PlayerDeath", "CommendationTracker", function( victim, inflictor, att
 
 	end
 
+end)
+
+
+--Credit to Salamafet for his simple AFK script. Slightly modified.
+--Git: https://github.com/Salamafet/AFK_Kicker/blob/master/lua/autorun/server/AFK_Kicker.lua
+
+--------------------------------------------------
+AFK_WARN_TIME = 20
+
+AFK_TIME = 120 
+--------------------------------------------------
+
+hook.Add("PlayerInitialSpawn", "MakeAFKVar", function(ply)
+	ply.NextAFK = CurTime() + AFK_TIME
+end)
+
+hook.Add("Think", "HandleAFKPlayers", function()
+	for _, ply in pairs (player.GetAll()) do
+		if ( ply:IsConnected() and ply:IsFullyAuthenticated() ) then
+			if (!ply.NextAFK) then
+				ply.NextAFK = CurTime() + AFK_TIME
+			end
+		
+			local afktime = ply.NextAFK
+			if (CurTime() >= afktime - AFK_WARN_TIME) and (!ply.Warning) then
+				chatMessagePly(ply, "[TPG] AFK Warning:" , Color( 255, 0, 0 ) )	
+				chatMessagePly(ply, "[TPG] You will be disconnected in 60 seconds if you do not move." , Color( 255, 0, 0 ) )	
+				
+				ply.Warning = true
+			elseif (CurTime() >= afktime) and (ply.Warning) then
+				ply.Warning = nil
+				ply.NextAFK = nil
+				ply:Kick("\nAFK!!!")
+			end
+		end
+	end
+end)
+
+hook.Add("KeyPress", "PlayerMoved", function(ply, key)
+	ply.NextAFK = CurTime() + AFK_TIME
+	if ply.Warning == true then
+		ply.Warning = false
+		chatMessagePly(ply, "[TPG] You are no longer AFK." , Color( 0, 255, 0 ) )	
+	end
 end)

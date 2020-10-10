@@ -90,6 +90,13 @@ SpWeaponsTable["amr"] = 3
 SpWeaponsTable["xm25"] = 4
 SpWeaponsTable["mines"] = 5
 
+ArmorTable = {}
+ArmorTable["None"] = 0
+ArmorTable["Light"] = 1
+ArmorTable["Medium"] = 2
+ArmorTable["Heavy"] = 3
+ArmorTable["Juggernaut"] = 4
+
 function openLoadoutMenu()
  
     local frame = vgui.Create( "DFrame" )
@@ -163,8 +170,27 @@ function openLoadoutMenu()
         RunConsoleCommand( "loadout_change", 3 ,SpWeaponsTable[value] )
     end   
 
+    DComboBox = vgui.Create( "DComboBox", frame )
+    DComboBox:SetPos( 50, 200 )
+    DComboBox:SetSize( 150, 30 )
+    DComboBox:SetValue( "Armor" )
+    DComboBox:AddChoice( "None" )
+    DComboBox:AddChoice( "Light" )
+    DComboBox:AddChoice( "Medium" )
+    DComboBox:AddChoice( "Heavy" )
+    DComboBox:AddChoice( "Juggernaut" )
+
+    DComboBox.OnSelect = function( self, index, value )
+        print( value .." armor was selected." )
+        local armorNo = ArmorTable[value]
+        if armorNo == 4 then
+            chat.AddText( Vector(255,0,0), "[TPG] Warning: Juggernaut armor cannot be worn in a seat." )
+        end
+        RunConsoleCommand( "loadout_change", 4 ,ArmorTable[value] )
+    end   
+
     respawnbutton = vgui.Create( "DButton", frame )
-    respawnbutton:SetPos( 60, 200) --Place it next to our previous one
+    respawnbutton:SetPos( 60, 240) --Place it next to our previous one
     respawnbutton:SetSize( 125, 50 )
     respawnbutton:SetText( "Respawn" )
     respawnbutton.DoClick = function() --Make the player join team 2
@@ -358,7 +384,7 @@ hook.Add( "SpawnMenuOpen", "DisableSpawnMenuOutOfRange", function()
 --	if ( !inrange and !LocalPlayer():IsAdmin() ) then
 	if ( inrange < 1 ) then
 		chat.AddText( Color( 255, 0, 0 ), "[TPG] Cannot open spawn menu outside spawn.")
-			return false
+			return LocalPlayer():IsAdmin()
 	end
 end )
 

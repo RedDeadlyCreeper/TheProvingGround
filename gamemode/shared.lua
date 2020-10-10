@@ -6,7 +6,7 @@ GM.Website 	= "N/A"
 
 
 --[[
-V1.3
+V1.5
 
 <--- Current Maplist --->
 
@@ -39,28 +39,18 @@ gm_baik_construct_draft1
 gm_baik_citycentre_v3
 gm_de_port_opened_v2
 
-*TODO*
-
-DONE - Fix team balancing
-Autobalance player with most kills
-DONE - Water kills players over time out of seats
-DONE - Auto uncloak
-DONE - Fixed mapvoting
-
 *Planned*
 
-tutorial message
-
 Game music
-Sort functions by clientside and serverside
-Use bigger SZ designator prop.
-Anti AFK (AFK automatically moves to unassigned with props cleaned up)
+Propperly sort functions by clientside and serverside
 Add enemy spotting system
+Fix safezone scaling
 
 Re-arm/Repair Stations -- MEH
 Find out why includes were screwed --IDK
 Add support for non spherical safezones *shrug*
 Move weapon lists to their own folder for both client and sv - Only if i can get includes to work on total nerdery
+Add NPC Juggernauts who wield miniguns to guard each control point. Only way to get Javelin?
 ]]--
 
 
@@ -86,6 +76,7 @@ GameVars.PropsRedCount = 0
 GameVars.WeightGreenCount = 0
 GameVars.WeightRedCount = 0
 GameVars.DupeWaitTime = {} --Used to keep track of player dupe spawn delays
+GameVars.DupeProps = {} --Temporarily used to store the props of a dupe. Used for dupe cooldown calculation. This had to be done to allow players to despawn dupes.
 
 GameVars.GameThinkTick = 0 --Every 30 iterations the game thinks
 GameVars.Searchtick = 0 --Every 100 normal iterations do an entity search
@@ -130,10 +121,16 @@ function GM:Initialize()
 		timer.Simple( 3, function() 
 			setupGamemode() 
 			--For server owners who never set these.
-	RunConsoleCommand( "sbox_godmode", "0" )
-	RunConsoleCommand( "sbox_playershurtplayers", "1" )
-	RunConsoleCommand( "sv_alltalk", "0" )
-	RunConsoleCommand( "mp_falldamage", "1" )
+
+	RunConsoleCommand( "sbox_godmode", "0" ) --For use in sandbox servers that enable god mode by default.
+	RunConsoleCommand( "sbox_playershurtplayers", "1" ) --For use in sandbox servers that enable god mode by default.
+
+	RunConsoleCommand( "sv_alltalk", "0" ) --Team voice chat, makes voice chat useful.
+
+	RunConsoleCommand( "mp_falldamage", "1" ) --No more 10 fall damage from falling from space.
+
+	RunConsoleCommand( "sbox_maxprops", "200" ) --Optimize your vehicles, P L E A S E. Your team will HATE you otherwise.
+	RunConsoleCommand( "wire_holograms_max", "150" ) --Some kind person spawned a 1000 holo vehicle. I was not amused at my 3 frames. Games should not be won by frying your opponent's computer.
 
 		end )
 	end
@@ -216,9 +213,9 @@ function GamemodeThinkingThing()
 
 				
 			if not inrange then
---				ply:GodDisable()
+				--ply:GodDisable()
 
-local SZT = GameVars.PlayerSafezoneTime[ply] or 0
+		local SZT = GameVars.PlayerSafezoneTime[ply] or 0
 				if SZT > 0 then
 					
 					if SZT == 5 then --Truly stops people from flinging themselves outside SZ
@@ -296,6 +293,8 @@ local SZT = GameVars.PlayerSafezoneTime[ply] or 0
 					else
 						ply:SendLua( "LocalPlayer():EmitSound( 'mvm/mvm_warning.wav' )" )
 					end
+					
+					GameVars.DupeWaitTime[ply] = 0
 
 				end
 
@@ -331,7 +330,9 @@ local SZT = GameVars.PlayerSafezoneTime[ply] or 0
 				else
 					ply:SendLua( "LocalPlayer():EmitSound( 'mvm/mvm_warning.wav' )" )
 				end
-		
+
+				GameVars.DupeWaitTime[ply] = 0
+
 			end
 
 			chatMessageGlobal( "The Green Terror has won the round!!!" , Color( 255, 0, 0 ) )
@@ -382,19 +383,22 @@ local SZT = GameVars.PlayerSafezoneTime[ply] or 0
 
 		end
 
+		--Positional inaccuracy did this, blame it not me
+
+		GameVars.TimeVars["LTime"] = GameVars.TimeVars["Time"] or 0
+	
+		local deltatime = math.Max(GameVars.TimeVars["Time"] - GameVars.TimeVars["LTime"],0.01)
+	
+		for id = 1, table.Count( GameVars.SeatEntities ) do
+			if	IsValid( GameVars.SeatEntities[id]["Ent"] ) then
+				calculateForceLimits(id,deltatime)
+			end
+		end
+
 	end
 
 	--Rapid calculations begin here
-	GameVars.TimeVars["LTime"] = GameVars.TimeVars["Time"] or 0
 	GameVars.TimeVars["Time"] = CurTime()
-
-	local deltatime = math.Max(GameVars.TimeVars["Time"] - GameVars.TimeVars["LTime"],0.01)
-
-	for id = 1, table.Count( GameVars.SeatEntities ) do
-		if	IsValid( GameVars.SeatEntities[id]["Ent"] ) then
-			calculateForceLimits(id,deltatime)
-		end
-	end
 
 
 end
@@ -547,7 +551,7 @@ if MapName == "gm_construct" then
 	GameVars.SZRadius = 750
 	GameVars.PointPositions = {Vector(-2563,-1217,240),Vector(-2563,-417,240)}
 	GameVars.PointNames = {"Roof","Roof1"}
-	GameVars.WinsToRestart = 1
+	GameVars.WinsToRestart = 5
 	
 elseif MapName == "gm_baik_citycentre_v3" then
 	GameVars.FreedomSpawn = Vector(5280, 4760, 256)
@@ -702,7 +706,7 @@ elseif MapName == "gm_bigcity_improved" then
 	GameVars.PointNames = {"Park","Sludge"}
 elseif MapName == "gm_diprip_refinery" then
 	GameVars.FreedomSpawn = Vector(-7754, 6833, 161)
-	GameVars.DutySpawn = Vector(6546, -6671, 325)
+	GameVars.DutySpawn = Vector(4141, -5520, 320)
 	GameVars.WeightLimit = 120
 	GameVars.PropCountMax = 400
 	GameVars.PointCount = 3
@@ -820,6 +824,20 @@ function spawnPoint(pointnum)
 		GameVars.PointEntities[pointnum] = ent
 	end
 
+	--No point defending juggernauts for now
+--[[
+	local guard = ents.Create("npc_combine_s")
+
+	if ( IsValid( ent ) ) then
+
+		guard:SetPos( GameVars.PointPositions[pointnum] + Vector( 0, 0 , 150 ) )
+		guard:Spawn()
+		guard:Activate()
+		guard:Give("weapon_ar2")
+		guard:SetHealth( 500 )
+		guard:DropToFloor()
+	end
+]]--
 
 end
 
@@ -828,16 +846,17 @@ local storespawn = GameVars.FreedomSpawn
 GameVars.FreedomSpawn = GameVars.DutySpawn
 GameVars.DutySpawn = storespawn
 
-GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,9540) --CLAMP DAMN YOU
+GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,3000) --CLAMP DAMN YOU
 
 function setupGamemode()
 
-	GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,9540)
+	GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,3000)
 
 	game.CleanUpMap( true )
 
 
-local	storespawn = GameVars.FreedomSpawn
+	local	storespawn = GameVars.FreedomSpawn
+	
 	GameVars.FreedomSpawn = GameVars.DutySpawn
 	GameVars.DutySpawn = storespawn
 
@@ -989,40 +1008,46 @@ end)
 
 --I wonder how fast the redundant hook functions that can be combined into 1 function will be noticed. Patch this out later or if they find it.
 
+
 function calculateForceLimits(id,Deltime) --Will boot a player out of their seat and kill them if they exceed G force. Also updates various seat variables
---Speed limit is 3500, G force limit is 50G
-local ent = GameVars.SeatEntities[id]["Ent"]
+	--Speed limit is 3500, G force limit is 50G
+	local ent = GameVars.SeatEntities[id]["Ent"]
 
-local lastPos = GameVars.SeatEntities[id]["Pos"] or ent:GetPos() --Parented seats best seats
-GameVars.SeatEntities[id]["Pos"] = ent:GetPos()
+	local lastPos = GameVars.SeatEntities[id]["Pos"] or ent:GetPos() --Parented seats best seats
+	GameVars.SeatEntities[id]["Pos"] = ent:GetPos()
 
 
-local lastVel = GameVars.SeatEntities[id]["Vel"] or Vector(0,0,0)
-GameVars.SeatEntities[id]["Vel"] = (GameVars.SeatEntities[id]["Pos"]-lastPos) / Deltime --Gets change in position over time
+	local lastVel = GameVars.SeatEntities[id]["Vel"] or Vector(0,0,0)
+	GameVars.SeatEntities[id]["Vel"] = (GameVars.SeatEntities[id]["Pos"]-lastPos) / Deltime --Gets change in position over time
 
-local Accel = (GameVars.SeatEntities[id]["Vel"]-lastVel) / Deltime --Change in velocity
---19291*4
---7716400 old
-if Accel:Length() > (129921) then --Pulling about 50g. If you pull this hard you should get something checked out.
-	print(Accel:Length())
-	Driver = ent:GetDriver()
-	if IsValid(Driver) then
-	Driver:ExitVehicle()
-	Driver:Kill()
-	chatMessagePly(Driver, "[TPG] Exceeded G-Limit of 50Gs." , Color( 255, 0, 0 ) )
+	local Accel = (GameVars.SeatEntities[id]["Vel"]-lastVel) / Deltime --Change in velocity
+	local Driver = ent:GetDriver()
+	--19291*4
+	--7716400 old
+	--129921 ~= 50G
+	if Accel:Length() > (129921) then --Pulling about 50g. If you pull this hard you should get something checked out.
+		print(Accel:Length())
+		if IsValid(Driver) then
+		Driver:ExitVehicle()
+		Driver:Kill()
+		chatMessagePly(Driver, "[TPG] Exceeded G-Limit of 50Gs." , Color( 255, 0, 0 ) )
+		end
+
+	elseif lastVel:Length() > 3500 then
+		print(lastVel:Length())
+		if IsValid(Driver) then
+		Driver:ExitVehicle()
+		Driver:Kill()
+		chatMessagePly(Driver, "[TPG] Exceeded 200 MPH in speed." , Color( 255, 0, 0 ) )
+		end
+
+	elseif IsValid(Driver) then
+
+		if Driver:GetMaxHealth() == 500 then
+			Driver:ExitVehicle()
+			chatMessagePly(Driver, "[TPG] Your armor is too heavy for the chair." , Color( 255, 0, 0 ) )
+		end
 	end
-
-elseif lastVel:Length() > 3500 then
-	print(lastVel:Length())
-	Driver = ent:GetDriver()
-	if IsValid(Driver) then
-	Driver:ExitVehicle()
-	Driver:Kill()
-	chatMessagePly(Driver, "[TPG] Exceeded 200 MPH in speed." , Color( 255, 0, 0 ) )
-	end
-
-end
-
 
 end
 
