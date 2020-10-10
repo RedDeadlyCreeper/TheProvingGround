@@ -1025,19 +1025,19 @@ function calculateForceLimits(id,Deltime) --Will boot a player out of their seat
 	--19291*4
 	--7716400 old
 	--129921 ~= 50G
-	if Accel:Length() > (129921) then --Pulling about 50g. If you pull this hard you should get something checked out.
+	if Accel:Length() > (999999999999999) then--129921, 999999999999999  --Pulling about 50g. If you pull this hard you should get something checked out.
 		print(Accel:Length())
 		if IsValid(Driver) then
 		Driver:ExitVehicle()
-		Driver:Kill()
+--		Driver:Kill()
 		chatMessagePly(Driver, "[TPG] Exceeded G-Limit of 50Gs." , Color( 255, 0, 0 ) )
 		end
 
-	elseif lastVel:Length() > 3500 then
+	elseif lastVel:Length() > 9999999999 then --9999999999 , 3500
 		print(lastVel:Length())
 		if IsValid(Driver) then
 		Driver:ExitVehicle()
-		Driver:Kill()
+--		Driver:Kill()
 		chatMessagePly(Driver, "[TPG] Exceeded 200 MPH in speed." , Color( 255, 0, 0 ) )
 		end
 
