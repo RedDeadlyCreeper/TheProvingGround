@@ -216,6 +216,7 @@ function GM:PlayerLoadout( ply )
 	
 	ply:Give( "weapon_physgun" )
 	ply:Give( "gmod_camera" )
+	ply:Give( "weapon_crowbar" )
 
 	n = ply:Team() or 0
 
@@ -240,7 +241,7 @@ end --Neutral shouldn't get weapons
 ply:SetPlayerColor( teams[n].color or Color(255,255,255) )
 ply:SetWeaponColor( teams[n].color or Color(255,255,255) )
 
-ply:SendLua( "LocalPlayer():EmitSound( 'weapons/ar2/npc_ar2_reload.wav' )" )
+ply:SendLua( "LocalPlayer():EmitSound( 'acf_extra/tankfx/gnomefather/rack.wav' )" )
 
 ply:Give( "gmod_tool" ) --Just so people dont dupe before joining a team.
 
@@ -275,9 +276,9 @@ local pWepString = PrimaryWeaponsTable[math.floor(PrimWep)]
 local sWepString = SecWeaponsTable[math.floor(SecWep)]
 local spWepString = SpWeaponsTable[math.floor(SpecWep)]
 local eqArmorString = ArmorTable[math.floor(EqArmor)]
-local speed = 50 --50 percent is slowest speed you can get from weapons
+local speed = 55 --50 percent is slowest speed you can get from weapons
 
-if pWepString == "NoWeapon" then speed = speed + 20 else
+if pWepString == "NoWeapon" then speed = speed + 15 else
 	ply:Give( pWepString )
 end --Adds 20% speed for forgoing a primary weapon
 
@@ -286,7 +287,7 @@ if sWepString == "NoWeapon" then speed = speed + 10 else
 end --Adds 10% speed for forgoing a secondary weapon
 
 if spWepString == "NoWeapon" then --Adds 30% speed for forgoing a special weapon
-	speed = speed + 30 
+	speed = speed + 20 
 elseif spWepString == "mines" then
 	ply:Give( "antipersonmine" )
 	ply:Give( "boundingmine" )
@@ -301,7 +302,7 @@ local armor = 25
 local model = "models/player/Group03/Male_0"..math.random(1,9)..".mdl"
 
 if eqArmorString == "None" then
-	hp = 50
+	hp = 30
 	armor = 0
 	speed = speed + 10 
 	model = "models/player/Group01/Male_0"..math.random(1,9)..".mdl"
@@ -316,14 +317,14 @@ elseif eqArmorString == "Medium"  then
 	speed = speed - 10 
 	model = "models/player/barney.mdl"
 elseif eqArmorString == "Heavy"  then
-	hp = 125
+	hp = 150
 	armor = 200
 	speed = speed - 15 
 	model = "models/player/police.mdl"
 elseif eqArmorString == "Juggernaut"  then
 	hp = 500
 	armor = 999999
-	speed = speed - 35 
+	speed = speed - 40 
 	model = "models/player/combine_super_soldier.mdl"
 end
 
@@ -332,8 +333,8 @@ ply:SetModel( model)
 ply:SetHealth(hp)
 ply:SetMaxHealth(hp)
 ply:SetArmor(armor)
-ply:SetWalkSpeed( (speed/100)*200 ) --RIP in nerf
-ply:SetRunSpeed( (speed/100)*350 ) --RIP in nerf
+ply:SetWalkSpeed( (speed/100)*400 ) --RIP in nerf
+ply:SetRunSpeed( (speed/100)*600 ) --RIP in nerf
 
 --End of loadouts
 
@@ -453,7 +454,7 @@ function TestTeamLims(ArgTable) --Use the same arguments as the original functio
 
 			chatMessagePly(testplayer, "[TPG] 60 second duplicator grace period." , Color( 0, 255, 0 ) )				
 
-			timer.Simple( 5, function()
+			timer.Simple( 60, function()
 
 				testweight = 0
 
