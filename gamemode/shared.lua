@@ -43,14 +43,12 @@ gm_de_port_opened_v2
 
 Game music
 Propperly sort functions by clientside and serverside
-Add enemy spotting system
-Fix safezone scaling
 
 Re-arm/Repair Stations -- MEH
 Find out why includes were screwed --IDK
 Add support for non spherical safezones *shrug*
+Fix safezone scaling
 Move weapon lists to their own folder for both client and sv - Only if i can get includes to work on total nerdery
-Add NPC Juggernauts who wield miniguns to guard each control point. Only way to get Javelin?
 ]]--
 
 
@@ -77,6 +75,20 @@ GameVars.WeightGreenCount = 0
 GameVars.WeightRedCount = 0
 GameVars.DupeWaitTime = {} --Used to keep track of player dupe spawn delays
 GameVars.DupeProps = {} --Temporarily used to store the props of a dupe. Used for dupe cooldown calculation. This had to be done to allow players to despawn dupes.
+GameVars.GameType = math.Rand(0,1) --Current game type. 1 = control points, 2 = KOTH, 3 = Deathmatch, 4 = CTF
+
+if GameVars.GameType < 0.1 then
+	GameVars.GameType = 2
+elseif GameVars.GameType < 0.25 then
+	GameVars.GameType = 3
+else
+	GameVars.GameType = 1
+end
+
+
+
+--GameVars.GameType = 3
+--GameVars.DeathTickets = 0 --Whether to subtract tickets on death from each team.
 
 GameVars.GameThinkTick = 0 --Every 30 iterations the game thinks
 GameVars.Searchtick = 0 --Every 100 normal iterations do an entity search
@@ -87,7 +99,7 @@ GameVars.SeatEntities = {} --Also holds seat position and velocity information u
 GameVars.TimeVars = {}
 GameVars.VoteMapList = {"Map1", "Map2", "Map3", "Map4"} --Populated at time of mapvoting
 GameVars.PlayerScoreTrackers = {} -- Holds all of the players in this array,
---[1]Kills, [2]Kills/Ton, [3]Objective kills, [4]Captures
+--[1]Kills, [2]Kills/Ton, [3]Objective kills, [4]Captures, [99] Boolean RTV, [100] Boolean Votescramble
 
 team.SetUp( 0, "Unasigned", Color( 255, 255, 255 ))
 team.SetUp( 1, "The Green Terror", Color( 0, 255, 0 ))
@@ -539,273 +551,780 @@ GameVars.PropCountMax = 300 --Feel free to override this in map setup
 GameVars.SZRadius = 750 --Radius of safezones around spawns in units
 
 
---I Could use tables buuuuuuuuuuut meh
-if MapName == "gm_construct" then
+--I Could use tables buuuuuuuuuuut meh.
+--Brace yourself for the mother of all if statements.
+--GameVars.GameType
+if GameVars.GameType == 1 then
+	if MapName == "gm_construct" then
 
-	GameVars.FreedomSpawn = Vector(727,548,-143)
-	GameVars.DutySpawn = Vector(-4970,-3434,251)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 200
-	GameVars.PointCount = 2
-	GameVars.CapMul = 3 --Feel free to override this in map setup
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-2563,-1217,240),Vector(-2563,-417,240)}
-	GameVars.PointNames = {"Roof","Roof1"}
-	GameVars.WinsToRestart = 5
-	
-elseif MapName == "gm_baik_citycentre_v3" then
-	GameVars.FreedomSpawn = Vector(5280, 4760, 256)
-	GameVars.DutySpawn = Vector(-5280,-4760, 256)
-	GameVars.WeightLimit = 60
-	GameVars.PropCountMax = 150
-	GameVars.PointCount = 2
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(3400, -1928, 16),Vector(-3400, 1928, 16)}
-	GameVars.PointNames = {"Green Park","Red Park"}
+		GameVars.FreedomSpawn = Vector(727,548,-143)
+		GameVars.DutySpawn = Vector(-4970,-3434,251)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 2
+		GameVars.CapMul = 3 --Feel free to override this in map setup
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-2563,-1217,240),Vector(-2563,-417,240)}
+		GameVars.PointNames = {"Roof","Roof1"}
+		GameVars.WinsToRestart = 5
+		
+	elseif MapName == "gm_baik_citycentre_v3" then
+		GameVars.FreedomSpawn = Vector(5280, 4760, 256)
+		GameVars.DutySpawn = Vector(-5280,-4760, 256)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 2
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(3400, -1928, 16),Vector(-3400, 1928, 16)}
+		GameVars.PointNames = {"Green Park","Red Park"}
 
-elseif MapName == "gm_baik_coast_03" then
-	GameVars.FreedomSpawn = Vector(-4678, -5985, 501)
-	GameVars.DutySpawn = Vector(7312, 4011, 295)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 2
-	GameVars.CapMul = 0.025	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-5137, 3755, 256),Vector(-217, 8201, 62)}
-	GameVars.PointNames = {"Beach House","Docks"}
-elseif MapName == "gm_baik_coast_03_night" then
-	GameVars.FreedomSpawn = Vector(-4678, -5985, 501)
-	GameVars.DutySpawn = Vector(7312, 4011, 295)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 2
-	GameVars.CapMul = 0.025	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-5137, 3755, 256),Vector(-217, 8201, 62)}
-	GameVars.PointNames = {"Beach House","Docks"}
-elseif MapName == "gm_baik_construct_draft1" then
-	GameVars.FreedomSpawn = Vector(-3038, 3038, 17)
-	GameVars.DutySpawn = Vector(3038, -3038, 17)
-	GameVars.WeightLimit = 40
-	GameVars.PropCountMax = 150
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(2802, 3016, 4),Vector(0,0,424),Vector(-2802, -3016, 4)}
-	GameVars.PointNames = {"Parking Lot A","Parking Garage","Parking Lot B"}
-elseif MapName == "gm_de_port_opened_v2" then --V1 not included
-	GameVars.FreedomSpawn = Vector(-1920, 3944, 513)
-	GameVars.DutySpawn = Vector(2245, -3674, 777)
-	GameVars.WeightLimit = 40
-	GameVars.PropCountMax = 150
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-1022, 137, 512),Vector(1119, 190, 642),Vector(2212, 1339, 512)}
-	GameVars.PointNames = {"Warehouse","Oil","Coast"}
-elseif MapName == "gm_emp_arid" then
-	GameVars.FreedomSpawn = Vector(13127,-11026,513)
-	GameVars.DutySpawn = Vector(-11004, 12164, 537)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-1065, -12302, 512),Vector(-604, -874, 359),Vector(-4341, 6071, 472)}
-	GameVars.PointNames = {"Bunker","Bridge","Small Hill"}
-elseif MapName == "gm_emp_manticore" then
-	GameVars.FreedomSpawn = Vector(-6670, -3958, 1760)
-	GameVars.DutySpawn = Vector(10288, 2047, 1761)
-	GameVars.WeightLimit = 80
-	GameVars.PropCountMax = 250
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(3897, -4170, 1744),Vector(12,251,2048),Vector(-3988, 4155, 1744)}
-	GameVars.PointNames = {"Brick Factory","Bridge","Office"}
-elseif MapName == "gm_emp_midbridge" then
-	GameVars.FreedomSpawn = Vector(632, -9715, 2081)
-	GameVars.DutySpawn = Vector(-628, 9755, 2081)
-	GameVars.WeightLimit = 160
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 4
-	GameVars.CapMul = 0.01	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(7931, -3408, 32),Vector(-7909, 3435, 32),Vector(0,0,2048),Vector(0,0,-255)}
-	GameVars.PointNames = {"A Ruins","B Ruins","Hell aBridged","Under the Bridge"}
-elseif MapName == "gm_emp_palmbay" then
-	GameVars.FreedomSpawn = Vector(-6577, -8994, -2331)
-	GameVars.DutySpawn = Vector(8857, 10746, -2331)
-	GameVars.WeightLimit = 80
-	GameVars.PropCountMax = 250
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-7173, 11422, -2884),Vector(313, -499, -2953),Vector(3801, -9546, -2575)}
-	GameVars.PointNames = {"Island","Beach House","Grassland"}
-elseif MapName == "gm_greenchoke" then
-	GameVars.FreedomSpawn = Vector(-9156, 10610, 1038)
-	GameVars.DutySpawn = Vector(9055, -10722, 1038)
-	GameVars.WeightLimit = 100
-	GameVars.PropCountMax = 250
-	GameVars.PointCount = 5
-	GameVars.CapMul = 0.01	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(6295, 2018, 1043),Vector(-5961, 2032, 929),Vector(495, -1037, 1184),Vector(-85, 3492, 910),Vector(175, -5296, 844)}
-	GameVars.PointNames = {"Mountain Outpost","Town Outpost","Bridge","Island A","Island B"}
-elseif MapName == "gm_baik_frontline" then
-	GameVars.FreedomSpawn = Vector(-9284, 357, -20)
-	GameVars.DutySpawn = Vector(6748, 485, -21)
-	GameVars.WeightLimit = 60
-	GameVars.PropCountMax = 200
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(1718, 30, -45),Vector(-1260, 409, 79),Vector(-4932, 142, -49)}
-	GameVars.PointNames = {"No Mans Land A","Fort Center","No Mans Land A"}
-elseif MapName == "gm_baik_stalingrad" then
-	GameVars.FreedomSpawn = Vector(-1360, -8207, 1)
-	GameVars.DutySpawn = Vector(-1428, 2101, 1)
-	GameVars.WeightLimit = 80
-	GameVars.PropCountMax = 250
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-7549, -2147, 0),Vector(-2254, -2538, -56),Vector(1516, -2438, 448)}
-	GameVars.PointNames = {"Railroad","Factory Ruins","Office Ruins"}
-elseif MapName == "gm_baik_trenches" then
-	GameVars.FreedomSpawn = Vector(3852,0,102)
-	GameVars.DutySpawn = Vector(-3852,0,102)
-	GameVars.WeightLimit = 60
-	GameVars.PropCountMax = 200
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-2874, 2570, 201),Vector(0,0,3),Vector(2647, -2775, 194)}
-	GameVars.PointNames = {"Corner Hill A","No-Mans Land","Corner Hill A"}
-elseif MapName == "gm_baik_valley_split" then
-	GameVars.FreedomSpawn = Vector(-6285, -5632, 7)
-	GameVars.DutySpawn = Vector(6193, 723, 8)
-	GameVars.WeightLimit = 80
-	GameVars.PropCountMax = 200
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(6011, -5034, 3),Vector(0,-2559, 2),Vector(-5958,-95,3)}
-	GameVars.PointNames = {"Red Camp","The Center","Green Camp"}
-elseif MapName == "gm_bigcity_improved" then
-	GameVars.FreedomSpawn = Vector(-10163,11922,-11136)
-	GameVars.DutySpawn = Vector(11937,-7932,-11136)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 2
-	GameVars.CapMul = 0.025	
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-983,-949,-11140),Vector(5060,6094,-11144)}
-	GameVars.PointNames = {"Park","Sludge"}
-elseif MapName == "gm_diprip_refinery" then
-	GameVars.FreedomSpawn = Vector(-7754, 6833, 161)
-	GameVars.DutySpawn = Vector(4141, -5520, 320)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(5874, 6349, 320),Vector(128,128,480),Vector(-5389,-5864, 320)}
-	GameVars.PointNames = {"Rail tunnels","Shipping and Handling","Dock Cranes"}
-elseif MapName == "gm_diprip_village" then
-	GameVars.FreedomSpawn = Vector(5974, 3971, 7)
-	GameVars.DutySpawn = Vector(-8421, -11827, 185)
-	GameVars.WeightLimit = 60
-	GameVars.PropCountMax = 200
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-9910, -331, 32),Vector(-449, -3181, 48),Vector(5456, -10558, -32)}
-	GameVars.PointNames = {"Sawmill","Coal Mine","Silos"}
-elseif MapName == "gm_emp_bush" then
-	GameVars.FreedomSpawn = Vector(-11392, -11104, -3333)
-	GameVars.DutySpawn = Vector(10060, 11788, -3327)
-	GameVars.WeightLimit = 160
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-10196, 9406, -3320),Vector(72, -286, -3449),Vector(8196, -8603, -2994)}
-	GameVars.PointNames = {"Green Field","Fort Center","Corner Hill"}
-elseif MapName == "gm_emp_commandergrad" then
-	GameVars.FreedomSpawn = Vector(3216, 12558, 9)
-	GameVars.DutySpawn = Vector(-7078, -13608, 9)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 250
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(7137, 4178, 1094),Vector(-1574, -714, 624),Vector(-10160, -4701, 1112)}
-	GameVars.PointNames = {"Mansion","City Center","Haunted House"}
-elseif MapName == "gm_freedom_city" then
-	GameVars.FreedomSpawn = Vector(-10769, 3232, 34)
-	GameVars.DutySpawn = Vector(6398,1988,464)
-	GameVars.WeightLimit = 100
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(1943, -9289, 21),Vector(-9000, -3721, 33),Vector(-2534, -434, 21)} 
-	GameVars.PointNames = {"Trainstop","City Trainstop","The Crossroad"}
-elseif MapName == "gm_greenland" then
-	GameVars.FreedomSpawn = Vector(-3461, -10270, 2)
-	GameVars.DutySpawn = Vector(3461, 10270, 2)
-	GameVars.WeightLimit = 120
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-3429, 8739, 183),Vector(78,2053,576),Vector(3694, -5634, 192)} 
-	GameVars.PointNames = {"Oil Well","Railroad Tracks","The Forest"}
-elseif MapName == "gm_islandrain_v3" then
-	GameVars.FreedomSpawn = Vector(-3831, 10741, -1200)
-	GameVars.DutySpawn = Vector(8391, -9920, -1175)
-	GameVars.WeightLimit = 80
-	GameVars.PropCountMax = 200
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-10637, -10705, -1161),Vector(6302, 4246, 1122),Vector(9443, 9233, -981)} 
-	GameVars.PointNames = {"Beach","The Mountain","Waterside Cliff"}
-elseif MapName == "gm_pacific_island_a3" then
-	GameVars.FreedomSpawn = Vector(13995,8546,-10539)
-	GameVars.DutySpawn = Vector(636,13393,-10612)
-	GameVars.WeightLimit = 60
-	GameVars.PropCountMax = 200
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(5744,7011,-10578),Vector(8721,11872,-9559),Vector(13502, 11900, -10752)} 
-	GameVars.PointNames = {"Beachside Bunker","The Tower","End of the line"}
-elseif MapName == "gm_toysoldiers" then
-	GameVars.FreedomSpawn = Vector(-5186,5086,-383)
-	GameVars.DutySpawn = Vector(5186,-5086,-383)
-	GameVars.WeightLimit = 80
-	GameVars.PropCountMax = 300
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-5250, -5132, -440),Vector(4908, 4919, -430),Vector(1787, 790, -430)} 
-	GameVars.PointNames = {"The Darkest Corner","The Lighter Side","Confused Boat"}
-elseif MapName == "gm_yanov" then
-	GameVars.FreedomSpawn = Vector(-4246, -4855, 65)
-	GameVars.DutySpawn = Vector(-3856, 1488,65)
-	GameVars.WeightLimit = 40
-	GameVars.PropCountMax = 150
-	GameVars.PointCount = 3
-	GameVars.CapMul = 0.02
-	GameVars.SZRadius = 750
-	GameVars.PointPositions = {Vector(-1968, -1324, -74),Vector(2609, -2517, 40),Vector(1728, 918, 64)} 
-	GameVars.PointNames = {"Extremely Confused Boat","Broken Car","Garage"}
+	elseif MapName == "gm_baik_coast_03" then
+		GameVars.FreedomSpawn = Vector(-4678, -5985, 501)
+		GameVars.DutySpawn = Vector(7312, 4011, 295)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 2
+		GameVars.CapMul = 0.025	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-5137, 3755, 256),Vector(-217, 8201, 62)}
+		GameVars.PointNames = {"Beach House","Docks"}
+	elseif MapName == "gm_baik_construct_draft1" then
+		GameVars.FreedomSpawn = Vector(-3038, 3038, 17)
+		GameVars.DutySpawn = Vector(3038, -3038, 17)
+		GameVars.WeightLimit = 40
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(2802, 3016, 4),Vector(0,0,424),Vector(-2802, -3016, 4)}
+		GameVars.PointNames = {"Parking Lot A","Parking Garage","Parking Lot B"}
+	elseif MapName == "gm_de_port_opened_v2" then --V1 not included
+		GameVars.FreedomSpawn = Vector(-1920, 3944, 513)
+		GameVars.DutySpawn = Vector(2245, -3674, 777)
+		GameVars.WeightLimit = 40
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-1022, 137, 512),Vector(1119, 190, 642),Vector(2212, 1339, 512)}
+		GameVars.PointNames = {"Warehouse","Oil","Coast"}
+	elseif MapName == "gm_emp_arid" then
+		GameVars.FreedomSpawn = Vector(13127,-11026,513)
+		GameVars.DutySpawn = Vector(-11004, 12164, 537)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-1065, -12302, 512),Vector(-604, -874, 359),Vector(-4341, 6071, 472)}
+		GameVars.PointNames = {"Bunker","Bridge","Small Hill"}
+	elseif MapName == "gm_emp_manticore" then
+		GameVars.FreedomSpawn = Vector(-6670, -3958, 1760)
+		GameVars.DutySpawn = Vector(10288, 2047, 1761)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 250
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(3897, -4170, 1744),Vector(12,251,2048),Vector(-3988, 4155, 1744)}
+		GameVars.PointNames = {"Brick Factory","Bridge","Office"}
+	elseif MapName == "gm_emp_midbridge" then
+		GameVars.FreedomSpawn = Vector(632, -9715, 2081)
+		GameVars.DutySpawn = Vector(-628, 9755, 2081)
+		GameVars.WeightLimit = 160
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 4
+		GameVars.CapMul = 0.01	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(7931, -3408, 32),Vector(-7909, 3435, 32),Vector(0,0,2048),Vector(0,0,-255)}
+		GameVars.PointNames = {"A Ruins","B Ruins","Hell aBridged","Under the Bridge"}
+	elseif MapName == "gm_emp_palmbay" then
+		GameVars.FreedomSpawn = Vector(-6577, -8994, -2331)
+		GameVars.DutySpawn = Vector(8857, 10746, -2331)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 250
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-7173, 11422, -2884),Vector(313, -499, -2953),Vector(3801, -9546, -2575)}
+		GameVars.PointNames = {"Island","Beach House","Grassland"}
+	elseif MapName == "gm_greenchoke" then
+		GameVars.FreedomSpawn = Vector(-9156, 10610, 1038)
+		GameVars.DutySpawn = Vector(9055, -10722, 1038)
+		GameVars.WeightLimit = 100
+		GameVars.PropCountMax = 250
+		GameVars.PointCount = 5
+		GameVars.CapMul = 0.01	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(6295, 2018, 1043),Vector(-5961, 2032, 929),Vector(495, -1037, 1184),Vector(-85, 3492, 910),Vector(175, -5296, 844)}
+		GameVars.PointNames = {"Mountain Outpost","Town Outpost","Bridge","Island A","Island B"}
+	elseif MapName == "gm_baik_frontline" then
+		GameVars.FreedomSpawn = Vector(-9284, 357, -20)
+		GameVars.DutySpawn = Vector(6748, 485, -21)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(1718, 30, -45),Vector(-1260, 409, 79),Vector(-4932, 142, -49)}
+		GameVars.PointNames = {"No Mans Land A","Fort Center","No Mans Land A"}
+	elseif MapName == "gm_baik_stalingrad" then
+		GameVars.FreedomSpawn = Vector(-1360, -8207, 1)
+		GameVars.DutySpawn = Vector(-1428, 2101, 1)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 250
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-7549, -2147, 0),Vector(-2254, -2538, -56),Vector(1516, -2438, 448)}
+		GameVars.PointNames = {"Railroad","Factory Ruins","Office Ruins"}
+	elseif MapName == "gm_baik_trenches" then
+		GameVars.FreedomSpawn = Vector(3852,0,102)
+		GameVars.DutySpawn = Vector(-3852,0,102)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-2874, 2570, 201),Vector(0,0,3),Vector(2647, -2775, 194)}
+		GameVars.PointNames = {"Corner Hill A","No-Mans Land","Corner Hill A"}
+	elseif MapName == "gm_baik_valley_split" then
+		GameVars.FreedomSpawn = Vector(-6285, -5632, 7)
+		GameVars.DutySpawn = Vector(6193, 723, 8)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(6011, -5034, 3),Vector(0,-2559, 2),Vector(-5958,-95,3)}
+		GameVars.PointNames = {"Red Camp","The Center","Green Camp"}
+	elseif MapName == "gm_bigcity_improved" then
+		GameVars.FreedomSpawn = Vector(-10163,11922,-11136)
+		GameVars.DutySpawn = Vector(11937,-7932,-11136)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 2
+		GameVars.CapMul = 0.025	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-983,-949,-11140),Vector(5060,6094,-11144)}
+		GameVars.PointNames = {"Park","Sludge"}
+	elseif MapName == "gm_diprip_refinery" then
+		GameVars.FreedomSpawn = Vector(-7754, 6833, 161)
+		GameVars.DutySpawn = Vector(4141, -5520, 320)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(5874, 6349, 320),Vector(128,128,480),Vector(-5389,-5864, 320)}
+		GameVars.PointNames = {"Rail tunnels","Shipping and Handling","Dock Cranes"}
+	elseif MapName == "gm_diprip_village" then
+		GameVars.FreedomSpawn = Vector(5974, 3971, 7)
+		GameVars.DutySpawn = Vector(-8421, -11827, 185)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-9910, -331, 32),Vector(-449, -3181, 48),Vector(5456, -10558, -32)}
+		GameVars.PointNames = {"Sawmill","Coal Mine","Silos"}
+	elseif MapName == "gm_emp_bush" then
+		GameVars.FreedomSpawn = Vector(-11392, -11104, -3333)
+		GameVars.DutySpawn = Vector(10060, 11788, -3327)
+		GameVars.WeightLimit = 160
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-10196, 9406, -3320),Vector(72, -286, -3449),Vector(8196, -8603, -2994)}
+		GameVars.PointNames = {"Green Field","Fort Center","Corner Hill"}
+	elseif MapName == "gm_emp_commandergrad" then
+		GameVars.FreedomSpawn = Vector(3216, 12558, 9)
+		GameVars.DutySpawn = Vector(-7078, -13608, 9)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 250
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(7137, 4178, 1094),Vector(-1574, -714, 624),Vector(-10160, -4701, 1112)}
+		GameVars.PointNames = {"Mansion","City Center","Haunted House"}
+	elseif MapName == "gm_freedom_city" then
+		GameVars.FreedomSpawn = Vector(-10769, 3232, 34)
+		GameVars.DutySpawn = Vector(6398,1988,464)
+		GameVars.WeightLimit = 100
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(1943, -9289, 21),Vector(-9000, -3721, 33),Vector(-2534, -434, 21)} 
+		GameVars.PointNames = {"Trainstop","City Trainstop","The Crossroad"}
+	elseif MapName == "gm_greenland" then
+		GameVars.FreedomSpawn = Vector(-3461, -10270, 2)
+		GameVars.DutySpawn = Vector(3461, 10270, 2)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-3429, 8739, 183),Vector(78,2053,576),Vector(3694, -5634, 192)} 
+		GameVars.PointNames = {"Oil Well","Railroad Tracks","The Forest"}
+	elseif MapName == "gm_islandrain_v3" then
+		GameVars.FreedomSpawn = Vector(-3831, 10741, -1200)
+		GameVars.DutySpawn = Vector(8391, -9920, -1175)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-10637, -10705, -1161),Vector(6302, 4246, 1122),Vector(9443, 9233, -981)} 
+		GameVars.PointNames = {"Beach","The Mountain","Waterside Cliff"}
+	elseif MapName == "gm_pacific_island_a3" then
+		GameVars.FreedomSpawn = Vector(13995,8546,-10539)
+		GameVars.DutySpawn = Vector(636,13393,-10612)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(5744,7011,-10578),Vector(8721,11872,-9559),Vector(13502, 11900, -10752)} 
+		GameVars.PointNames = {"Beachside Bunker","The Tower","End of the line"}
+	elseif MapName == "gm_toysoldiers" then
+		GameVars.FreedomSpawn = Vector(-5186,5086,-383)
+		GameVars.DutySpawn = Vector(5186,-5086,-383)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-5250, -5132, -440),Vector(4908, 4919, -430),Vector(1787, 790, -430)} 
+		GameVars.PointNames = {"The Darkest Corner","The Lighter Side","Confused Boat"}
+	elseif MapName == "gm_yanov" then
+		GameVars.FreedomSpawn = Vector(-4246, -4855, 65)
+		GameVars.DutySpawn = Vector(-3856, 1488,65)
+		GameVars.WeightLimit = 40
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.02
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-1968, -1324, -74),Vector(2609, -2517, 40),Vector(1728, 918, 64)} 
+		GameVars.PointNames = {"Extremely Confused Boat","Broken Car","Garage"}
+	end
+
+elseif GameVars.GameType == 2 then --KOTH
+	if MapName == "gm_construct" then
+
+		GameVars.FreedomSpawn = Vector(727,548,-143)
+		GameVars.DutySpawn = Vector(-4970,-3434,251)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15 --Feel free to override this in map setup
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-2563,-1217,240)}
+		GameVars.PointNames = {"The Hill"}
+		GameVars.WinsToRestart = 5
+		
+	elseif MapName == "gm_baik_citycentre_v3" then
+		GameVars.FreedomSpawn = Vector(5280, 4760, 256)
+		GameVars.DutySpawn = Vector(-5280,-4760, 256)
+		GameVars.WeightLimit = 40
+		GameVars.PropCountMax = 100
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(0, 0, 16)}
+		GameVars.PointNames = {"The Hill"}
+
+	elseif MapName == "gm_baik_coast_03" then
+		GameVars.FreedomSpawn = Vector(-4678, -5985, 501)
+		GameVars.DutySpawn = Vector(7312, 4011, 295)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 100
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-6480,10373,219)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_baik_construct_draft1" then
+		GameVars.FreedomSpawn = Vector(-3038, 3038, 17)
+		GameVars.DutySpawn = Vector(3038, -3038, 17)
+		GameVars.WeightLimit = 20
+		GameVars.PropCountMax = 100
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(0, 0, 2)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_de_port_opened_v2" then --V1 not included
+		GameVars.FreedomSpawn = Vector(-1920, 3944, 513)
+		GameVars.DutySpawn = Vector(2245, -3674, 777)
+		GameVars.WeightLimit = 20
+		GameVars.PropCountMax = 100
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(1119, 190, 642)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_emp_arid" then
+		GameVars.FreedomSpawn = Vector(13127,-11026,513)
+		GameVars.DutySpawn = Vector(-11004, 12164, 537)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-604, -874, 359)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_emp_manticore" then
+		GameVars.FreedomSpawn = Vector(-6670, -3958, 1760)
+		GameVars.DutySpawn = Vector(10288, 2047, 1761)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(12,251,2048)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_emp_midbridge" then
+		GameVars.FreedomSpawn = Vector(632, -9715, 2081)
+		GameVars.DutySpawn = Vector(-628, 9755, 2081)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(0,0,-255)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_emp_palmbay" then
+		GameVars.FreedomSpawn = Vector(-6577, -8994, -2331)
+		GameVars.DutySpawn = Vector(8857, 10746, -2331)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(313, -499, -2953)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_greenchoke" then
+		GameVars.FreedomSpawn = Vector(-9156, 10610, 1038)
+		GameVars.DutySpawn = Vector(9055, -10722, 1038)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(495, -1037, 1184)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_baik_frontline" then
+		GameVars.FreedomSpawn = Vector(-9284, 357, -20)
+		GameVars.DutySpawn = Vector(6748, 485, -21)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-1260, 409, 79)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_baik_stalingrad" then
+		GameVars.FreedomSpawn = Vector(-1360, -8207, 1)
+		GameVars.DutySpawn = Vector(-1428, 2101, 1)
+		GameVars.WeightLimit = 40
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-2254, -2538, -56)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_baik_trenches" then
+		GameVars.FreedomSpawn = Vector(3852,0,102)
+		GameVars.DutySpawn = Vector(-3852,0,102)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(0,0,3)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_baik_valley_split" then
+		GameVars.FreedomSpawn = Vector(-6285, -5632, 7)
+		GameVars.DutySpawn = Vector(6193, 723, 8)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(0,-2559, 2)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_bigcity_improved" then
+		GameVars.FreedomSpawn = Vector(-10163,11922,-11136)
+		GameVars.DutySpawn = Vector(11937,-7932,-11136)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-983,-949,-11140)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_diprip_refinery" then
+		GameVars.FreedomSpawn = Vector(-7754, 6833, 161)
+		GameVars.DutySpawn = Vector(4141, -5520, 320)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(128,128,480)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_diprip_village" then
+		GameVars.FreedomSpawn = Vector(5974, 3971, 7)
+		GameVars.DutySpawn = Vector(-8421, -11827, 185)
+		GameVars.WeightLimit = 40
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-449, -3181, 48)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_emp_bush" then
+		GameVars.FreedomSpawn = Vector(-11392, -11104, -3333)
+		GameVars.DutySpawn = Vector(10060, 11788, -3327)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(72, -286, -3449)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_emp_commandergrad" then
+		GameVars.FreedomSpawn = Vector(3216, 12558, 9)
+		GameVars.DutySpawn = Vector(-7078, -13608, 9)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(-1574, -714, 624)}
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_freedom_city" then
+		GameVars.FreedomSpawn = Vector(-10769, 3232, 34)
+		GameVars.DutySpawn = Vector(6398,1988,464)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(166,-4929, 33)} 
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_greenland" then
+		GameVars.FreedomSpawn = Vector(-3461, -10270, 2)
+		GameVars.DutySpawn = Vector(3461, 10270, 2)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(78,2053,576)} 
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_islandrain_v3" then
+		GameVars.FreedomSpawn = Vector(-3831, 10741, -1200)
+		GameVars.DutySpawn = Vector(8391, -9920, -1175)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(6302, 4246, 1122)} 
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_pacific_island_a3" then
+		GameVars.FreedomSpawn = Vector(13995,8546,-10539)
+		GameVars.DutySpawn = Vector(636,13393,-10612)
+		GameVars.WeightLimit = 40
+		GameVars.PropCountMax = 100
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(8721,11872,-9559)} 
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_toysoldiers" then
+		GameVars.FreedomSpawn = Vector(-5186,5086,-383)
+		GameVars.DutySpawn = Vector(5186,-5086,-383)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(1787, 790, -430)} 
+		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "gm_yanov" then
+		GameVars.FreedomSpawn = Vector(-4246, -4855, 65)
+		GameVars.DutySpawn = Vector(-3856, 1488,65)
+		GameVars.WeightLimit = 20
+		GameVars.PropCountMax = 100
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {2173,-763,72} 
+		GameVars.PointNames = {"The Hill"}
+	end
+elseif GameVars.GameType == 3 then --DM
+	GameVars.DeathTickets = 1 --The staple of deathmatch
+	if MapName == "gm_construct" then
+
+		GameVars.FreedomSpawn = Vector(727,548,-143)
+		GameVars.DutySpawn = Vector(-4970,-3434,251)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15 --Feel free to override this in map setup
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+		GameVars.WinsToRestart = 5
+		
+	elseif MapName == "gm_baik_citycentre_v3" then
+		GameVars.FreedomSpawn = Vector(5280, 4760, 256)
+		GameVars.DutySpawn = Vector(-5280,-4760, 256)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+
+	elseif MapName == "gm_baik_coast_03" then
+		GameVars.FreedomSpawn = Vector(-4678, -5985, 501)
+		GameVars.DutySpawn = Vector(7312, 4011, 295)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_baik_construct_draft1" then
+		GameVars.FreedomSpawn = Vector(-3038, 3038, 17)
+		GameVars.DutySpawn = Vector(3038, -3038, 17)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_de_port_opened_v2" then --V1 not included
+		GameVars.FreedomSpawn = Vector(-1920, 3944, 513)
+		GameVars.DutySpawn = Vector(2245, -3674, 777)
+		GameVars.WeightLimit = 40
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_emp_arid" then
+		GameVars.FreedomSpawn = Vector(13127,-11026,513)
+		GameVars.DutySpawn = Vector(-11004, 12164, 537)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_emp_manticore" then
+		GameVars.FreedomSpawn = Vector(-6670, -3958, 1760)
+		GameVars.DutySpawn = Vector(10288, 2047, 1761)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_emp_midbridge" then
+		GameVars.FreedomSpawn = Vector(632, -9715, 2081)
+		GameVars.DutySpawn = Vector(-628, 9755, 2081)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_emp_palmbay" then
+		GameVars.FreedomSpawn = Vector(-6577, -8994, -2331)
+		GameVars.DutySpawn = Vector(8857, 10746, -2331)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_greenchoke" then
+		GameVars.FreedomSpawn = Vector(-9156, 10610, 1038)
+		GameVars.DutySpawn = Vector(9055, -10722, 1038)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_baik_frontline" then
+		GameVars.FreedomSpawn = Vector(-9284, 357, -20)
+		GameVars.DutySpawn = Vector(6748, 485, -21)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_baik_stalingrad" then
+		GameVars.FreedomSpawn = Vector(-1360, -8207, 1)
+		GameVars.DutySpawn = Vector(-1428, 2101, 1)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_baik_trenches" then
+		GameVars.FreedomSpawn = Vector(3852,0,102)
+		GameVars.DutySpawn = Vector(-3852,0,102)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_baik_valley_split" then
+		GameVars.FreedomSpawn = Vector(-6285, -5632, 7)
+		GameVars.DutySpawn = Vector(6193, 723, 8)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_bigcity_improved" then
+		GameVars.FreedomSpawn = Vector(-10163,11922,-11136)
+		GameVars.DutySpawn = Vector(11937,-7932,-11136)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15	
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_diprip_refinery" then
+		GameVars.FreedomSpawn = Vector(-7754, 6833, 161)
+		GameVars.DutySpawn = Vector(4141, -5520, 320)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_diprip_village" then
+		GameVars.FreedomSpawn = Vector(5974, 3971, 7)
+		GameVars.DutySpawn = Vector(-8421, -11827, 185)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_emp_bush" then
+		GameVars.FreedomSpawn = Vector(-11392, -11104, -3333)
+		GameVars.DutySpawn = Vector(10060, 11788, -3327)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_emp_commandergrad" then
+		GameVars.FreedomSpawn = Vector(3216, 12558, 9)
+		GameVars.DutySpawn = Vector(-7078, -13608, 9)
+		GameVars.WeightLimit = 80
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {}
+		GameVars.PointNames = {}
+	elseif MapName == "gm_freedom_city" then
+		GameVars.FreedomSpawn = Vector(-10769, 3232, 34)
+		GameVars.DutySpawn = Vector(6398,1988,464)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {} 
+		GameVars.PointNames = {}
+	elseif MapName == "gm_greenland" then
+		GameVars.FreedomSpawn = Vector(-3461, -10270, 2)
+		GameVars.DutySpawn = Vector(3461, 10270, 2)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {} 
+		GameVars.PointNames = {}
+	elseif MapName == "gm_islandrain_v3" then
+		GameVars.FreedomSpawn = Vector(-3831, 10741, -1200)
+		GameVars.DutySpawn = Vector(8391, -9920, -1175)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 200
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {} 
+		GameVars.PointNames = {}
+	elseif MapName == "gm_pacific_island_a3" then
+		GameVars.FreedomSpawn = Vector(13995,8546,-10539)
+		GameVars.DutySpawn = Vector(636,13393,-10612)
+		GameVars.WeightLimit = 60
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {} 
+		GameVars.PointNames = {}
+	elseif MapName == "gm_toysoldiers" then
+		GameVars.FreedomSpawn = Vector(-5186,5086,-383)
+		GameVars.DutySpawn = Vector(5186,-5086,-383)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {} 
+		GameVars.PointNames = {}
+	elseif MapName == "gm_yanov" then
+		GameVars.FreedomSpawn = Vector(-4246, -4855, 65)
+		GameVars.DutySpawn = Vector(-3856, 1488,65)
+		GameVars.WeightLimit = 40
+		GameVars.PropCountMax = 150
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {} 
+		GameVars.PointNames = {}
+	end
 end
-
 
 
 
@@ -1018,27 +1537,28 @@ function calculateForceLimits(id,Deltime) --Will boot a player out of their seat
 
 
 	local lastVel = GameVars.SeatEntities[id]["Vel"] or Vector(0,0,0)
-	GameVars.SeatEntities[id]["Vel"] = (GameVars.SeatEntities[id]["Pos"]-lastPos) / Deltime --Gets change in position over time
+	GameVars.SeatEntities[id]["Vel"] = ((GameVars.SeatEntities[id]["Pos"]-lastPos) / Deltime)*0.1 --Gets change in position over time
 
-	local Accel = (GameVars.SeatEntities[id]["Vel"]-lastVel) / Deltime --Change in velocity
+	local Accel = ((GameVars.SeatEntities[id]["Vel"]-lastVel) / Deltime)*0.1 --Change in velocity
 	local Driver = ent:GetDriver()
 	--19291*4
 	--7716400 old
 	--129921 ~= 50G
-	if Accel:Length() > (999999999999999) then--129921, 999999999999999  --Pulling about 50g. If you pull this hard you should get something checked out.
+	if Accel:Length() > (24000) then--129921, 999999999999999  --Pulling about 50g. If you pull this hard you should get something checked out.
 		print(Accel:Length())
 		if IsValid(Driver) then
 		Driver:ExitVehicle()
 --		Driver:Kill()
-		chatMessagePly(Driver, "[TPG] Exceeded G-Limit of 50Gs." , Color( 255, 0, 0 ) )
+		chatMessagePly(Driver, "[TPG] Exceeded G-Limit." , Color( 255, 0, 0 ) )
 		end
 
-	elseif lastVel:Length() > 9999999999 then --9999999999 , 3500
+	elseif lastVel:Length() > 3500 then --9999999999 , 3500 about 200 mph
 		print(lastVel:Length())
 		if IsValid(Driver) then
 		Driver:ExitVehicle()
 --		Driver:Kill()
 		chatMessagePly(Driver, "[TPG] Exceeded 200 MPH in speed." , Color( 255, 0, 0 ) )
+		print(lastVel:Length())
 		end
 
 	elseif IsValid(Driver) then

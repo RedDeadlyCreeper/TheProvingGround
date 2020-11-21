@@ -14,9 +14,10 @@ function openTeamMenu()
     frame:MakePopup()
      
     team_1 = vgui.Create( "DButton", frame )
-    team_1:SetPos( frame:GetWide() / 2 - 250, frame:GetTall()/2 - 50) --Place it half way on the tall and 5 units in hirizontal
+    team_1:SetPos( frame:GetWide() / 2 - 250, frame:GetTall()/2 - 80) --Place it half way on the tall and 5 units in hirizontal
     team_1:SetSize( 100, 100 )
-    team_1:SetText( "Freedom" )
+    team_1:SetText( "The Green Terror" )
+    team_1:SetColor(Color(0,180,0))
     team_1.DoClick = function() --Make the player join team 1
         LocalPlayer():EmitSound( 'doors/doorstop1.wav' )     
         RunConsoleCommand( "team_change", 1 )
@@ -24,9 +25,10 @@ function openTeamMenu()
     end
     
     team_2 = vgui.Create( "DButton", frame )
-    team_2:SetPos( frame:GetWide() / 2 + 150, frame:GetTall()/2 - 50) --Place it next to our previous one
+    team_2:SetPos( frame:GetWide() / 2 + 150, frame:GetTall()/2 - 80) --Place it next to our previous one
     team_2:SetSize( 100, 100 )
-    team_2:SetText( "Duty" )
+    team_2:SetText( "The Red Menace" )
+    team_2:SetColor(Color(255,0,0))
     team_2.DoClick = function() --Make the player join team 2
         LocalPlayer():EmitSound( 'doors/doorstop1.wav' )
         RunConsoleCommand( "team_change", 2 )
@@ -35,12 +37,35 @@ function openTeamMenu()
     end
 
     team_3 = vgui.Create( "DButton", frame )
-    team_3:SetPos( frame:GetWide() / 2-50, frame:GetTall()/2 - 50) --Place it next to our previous one
+    team_3:SetPos( frame:GetWide() / 2-50, frame:GetTall()/2 - 80) --Place it next to our previous one
     team_3:SetSize( 100, 100 )
     team_3:SetText( "Unassigned" )
     team_3.DoClick = function() --Make the player join team 2
         LocalPlayer():EmitSound( 'common/weapon_select.wav' )          
         RunConsoleCommand( "team_change", 0 )
+        frame:Close()
+
+    end
+
+
+    rtv = vgui.Create( "DButton", frame )
+    rtv:SetPos( frame:GetWide() / 2-220, frame:GetTall()/2 + 50) --Place it next to our previous one
+    rtv:SetSize( 200, 60 )
+    rtv:SetText( "RTV" )
+    rtv.DoClick = function() --Make the player join team 2
+        LocalPlayer():EmitSound( 'common/weapon_select.wav' )          
+        RunConsoleCommand( "rock_the_vote" )
+        frame:Close()
+
+    end
+
+    rtv = vgui.Create( "DButton", frame )
+    rtv:SetPos( frame:GetWide() / 2+20, frame:GetTall()/2 + 50) --Place it next to our previous one
+    rtv:SetSize( 200, 60 )
+    rtv:SetText( "Scramble Teams" )
+    rtv.DoClick = function() --Make the player join team 2
+        LocalPlayer():EmitSound( 'common/weapon_select.wav' )          
+        RunConsoleCommand( "votescramble" )
         frame:Close()
 
     end
@@ -216,6 +241,13 @@ GameVars.PointEntities = {}
 
 
 
+GamemodeTable = {}
+GamemodeTable[1] = "CP"
+GamemodeTable[2] = "KOTH"
+GamemodeTable[3] = "DM"
+GamemodeTable[4] = "CTF"
+
+
 
 
 function HUD()
@@ -258,7 +290,7 @@ end
 
 
 
-	    draw.RoundedBox(3,ScrW()/2-30*GameVars.PointCount/2+2+((id-1)*30), 70, 20, 20,ent:GetColor())
+	    draw.RoundedBox(3,ScrW()/2-30*GameVars.PointCount/2+2+((id-1)*30), 115, 20, 20,ent:GetColor())
 
 		--draw.SimpleText( ent.PointName, "Default", data2D.x, data2D.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
@@ -268,13 +300,12 @@ end
 		local point = GameVars.PointPositions[id] + Vector (0,0,100)
 		local data2D = point:ToScreen()
         draw.SimpleText( ""..(GameVars.PointNames[id] or "Error"), "Default", data2D.x-1, data2D.y-13, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
     end
 --    PointPositions
 
-	points = team.GetPlayers(Team)
+    teamplayers = team.GetPlayers(Team)
 
-	for id, ent in pairs( points ) do
+	for id, ent in pairs( teamplayers ) do
 		local point = ent:GetPos() + ent:OBBCenter()
 		local data2D = point:ToScreen()
 
@@ -287,16 +318,78 @@ end
 --		draw.SimpleText( ent.PointName, "Default", data2D.x, data2D.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
 	end
+    
+    --Screen compass
+    local Lookangle = (client:EyeAngles().y+180)
+    local difangle = 0
+
+    --Hard coded compass, full of hard coded jank
+    if Lookangle < 320 and Lookangle > 220 then
+        difangle = Lookangle - 270
+        draw.SimpleText("N", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+    if Lookangle < 140 and Lookangle > 40 then
+        difangle = Lookangle - 90
+        draw.SimpleText("S", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+    if Lookangle < 230 and Lookangle > 130 then
+        difangle = Lookangle - 180
+        draw.SimpleText("E", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+    if Lookangle > 310 then
+        difangle = Lookangle - 360
+        draw.SimpleText("W", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+    if Lookangle < 50 then
+        difangle = Lookangle - 0
+        draw.SimpleText("W", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+
+    if Lookangle < 275 and Lookangle > 170 then
+        difangle = Lookangle - 225
+        draw.SimpleText("NE", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+
+    if Lookangle > 265 then
+        difangle = Lookangle - 315
+        draw.SimpleText("NW", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+
+    if Lookangle < 5 then
+        difangle = Lookangle + 50
+        draw.SimpleText("NW", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+
+    if Lookangle < 185 and Lookangle > 85 then
+        difangle = Lookangle - 135
+        draw.SimpleText("SE", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+
+    if Lookangle < 95 then
+        difangle = Lookangle - 45
+        draw.SimpleText("SW", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+
+    if Lookangle > 355 then
+        difangle = Lookangle - 405
+        draw.SimpleText("SW", "CloseCaption_Normal", ScrW()/2+difangle*7.3, 60, Color(255,255,0), 1, 0)
+    end
+
+    draw.SimpleText(""..math.Round(Lookangle), "CloseCaption_Normal", ScrW()/2, 80, Color(255,255,0), 1, 0)
+
+    --client
+    draw.SimpleText(""..(GamemodeTable[math.Round(GameVars.GameType)] or "N/A"), "CloseCaption_Normal", 60, 20, Color(255,255,0), 1, 0)
+    draw.RoundedBox(5,20, 14, 100, 40, Color(0,0,0,100) )
 
 	--Team Props and tonnage available
-	draw.RoundedBox(5,20, 20, 230, 80, TeamColor or Color(255, 255, 255) )--CornerCurvature radius, x, y, width, height, color
-	draw.SimpleText("Team Props: "..TeamPropCount.."/"..GameVars.PropCountMax, "DermaDefaultBold", 40, 30, Color(255,255,255), 0, 0)
-	draw.SimpleText("Team Weight: "..TeamWeight.."/"..GameVars.WeightLimit, "DermaDefaultBold", 40, 70, Color(255,255,255), 0, 0)
-	draw.RoundedBox(5,12.5, 10, 245, 95, Color(0,0,0,100) )--CornerCurvature radius, x, y, width, height, color
+	draw.RoundedBox(5,ScrW()-250, 20, 230, 80, TeamColor or Color(255, 255, 255) )--CornerCurvature radius, x, y, width, height, color
+	draw.SimpleText("Team Props: "..TeamPropCount.."/"..GameVars.PropCountMax, "DermaDefaultBold", ScrW()-240, 30, Color(255,255,255), 0, 0)
+	draw.SimpleText("Team Weight: "..TeamWeight.."/"..GameVars.WeightLimit, "DermaDefaultBold", ScrW()-240, 70, Color(255,255,255), 0, 0)
+	draw.RoundedBox(5,ScrW()-257.5, 12, 245, 95, Color(0,0,0,100) )--CornerCurvature radius, x, y, width, height, color
 	
 	--Middle Point Box
 	
-	draw.RoundedBox(5,ScrW()/2-375, 10, 750, 50, Color(0,0,0,100) )--CornerCurvature radius, x, y, width, height, color	
+	draw.RoundedBox(5,ScrW()/2-375, 10, 750, 100, Color(0,0,0,100) )--CornerCurvature radius, x, y, width, height, color	
 
 	--*Health Boxes*
 	local Length = math.max(GameVars.PointsFree/300,0.0001) --Point Ratio

@@ -61,7 +61,7 @@ function ENT:Think()
 		local pos = v:GetPos()
 		local dist = math.floor(pos:Distance(self.pos)/39.37) --Distance to point in meters
 
-			if dist < 15 then
+			if dist < 5 then
 		local team = v:Team()
 --		print( "PlayerName: "..v:Nick() )
 --		print( "Distance: "..dist.."m" )
@@ -91,23 +91,33 @@ function ENT:Think()
 	self.capProgress = self.capProgress + balance
 
 	if self.capProgress > self.capAt then --Freedom Cap
+		
 		self.capProgress = math.min(self.capProgress,self.capMax)
 
-	self.CapOwnership = 1	
-
+	
+		if balance < -1 then --1 or more players more than current cap holder.
+		self.CapOwnership = 0	
+		else
+		self.CapOwnership = 1	
+		end
 
 
 	elseif self.capProgress < -self.capAt then --Duty Cap
 	
-	self.capProgress = math.max(self.capProgress,-self.capMax)
+		self.capProgress = math.max(self.capProgress,-self.capMax)
 
-	self.CapOwnership = -1
+
+		if balance > 1 then --2 or more players more than the current cap holder.
+		self.CapOwnership = 0	
+		else
+		self.CapOwnership = -1	
+		end
 
 
 
 	else --Neutralized
 
-	self.CapOwnership = 0
+		self.CapOwnership = 0
 
 
 		

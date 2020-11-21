@@ -288,6 +288,7 @@ end --Adds 10% speed for forgoing a secondary weapon
 
 if spWepString == "NoWeapon" then --Adds 30% speed for forgoing a special weapon
 	speed = speed + 20 
+	ply:Give( "disposableat" )
 elseif spWepString == "mines" then
 	ply:Give( "antipersonmine" )
 	ply:Give( "boundingmine" )
@@ -415,7 +416,7 @@ function TestTeamLims(ArgTable) --Use the same arguments as the original functio
 --	print("TP: "..testprops)
 	print("TW: "..testweight)
 
-	if testweight > 10 or testprops > 140 then --Makes 5ts able to spawn with a maxed weightlimit since neither of these should change the weight or proplimit. Also bypasses duplicator cooldown.
+	if testweight > 5.5 or testprops > 140 then --Makes 5ts able to spawn with a maxed weightlimit since neither of these should change the weight or proplimit. Also bypasses duplicator cooldown.
 			--5.5T for light vehicle leniency. Don't abuse it playerbase!!!
 		if testweight > 65 then
 			print("TW: "..testweight)
@@ -734,9 +735,9 @@ end
 
 hook.Add( "PlayerDeath", "CommendationTracker", function( victim, inflictor, attacker )
 
-	if victim == attacker then
-		return
-	end
+--	if victim == attacker then
+--		return
+--	end
 
 	local attackerIsPlayer = attacker:IsPlayer()
 
@@ -785,6 +786,28 @@ hook.Add( "PlayerDeath", "CommendationTracker", function( victim, inflictor, att
 
 	end
 
+	local deathteam = victim:Team() or 0
+	local FreeCount = team.NumPlayers(1) or 0
+	local DutyCount = team.NumPlayers(2) or 0
+
+	if deathteam == 1 and (DutyCount+1 < FreeCount) then
+		victim:SetTeam( 1 )
+		victim:Spawn()	
+		chatMessagePly(victim, "[TPG] You have been autobalanced." , Color( 255, 255, 0 ) )	
+	elseif deathteam == 2 and (FreeCount+1 < DutyCount) then
+		victim:SetTeam( 1 )
+		victim:Spawn()	
+		chatMessagePly(victim, "[TPG] You have been autobalanced." , Color( 255, 255, 0 ) )	
+	end
+
+	if GameVars.DeathTickets == 1 then --The only way to cheese this is to get another person to drive your vehicle while you sit comfy at base. But what are the odds someone will do this?
+		if deathteam == 1 then
+			GameVars.PointsFree = GameVars.PointsFree - math.ceil((math.max(GameVars.PlayerPropInfo[victim][1] or 1,1))/2000) --Every 2 tons of armor = a ticket
+		elseif deathteam == 2 then
+			GameVars.PointsDuty = GameVars.PointsDuty - math.ceil((math.max(GameVars.PlayerPropInfo[victim][1] or 1,1))/2000)
+		end
+
+	end
 end)
 
 
@@ -829,4 +852,111 @@ hook.Add("KeyPress", "PlayerMoved", function(ply, key)
 		ply.Warning = false
 		chatMessagePly(ply, "[TPG] You are no longer AFK." , Color( 0, 255, 0 ) )	
 	end
+end)
+
+
+
+
+
+concommand.Add( "rock_the_vote", function( ply, cmd, args ) --Don't like the current map or gamemode? Change it!
+
+	GameVars.PlayerScoreTrackers[ply] = GameVars.PlayerScoreTrackers[ply] or {}
+
+	GameVars.PlayerScoreTrackers[ply][99] = 1
+
+	local VoteTally = 0
+	local TotalPlayers = 0
+	for _, aply in pairs (player.GetAll()) do
+		GameVars.PlayerScoreTrackers[aply] = GameVars.PlayerScoreTrackers[aply] or {}
+		VoteTally = VoteTally + (GameVars.PlayerScoreTrackers[aply][99] or 0)
+		TotalPlayers = TotalPlayers + 1
+	end
+
+	local reqdplayers = math.ceil(math.max(TotalPlayers/2,3)) --A minimum of 4 players are required to RTV.
+
+	chatMessagePly(ply, "[TPG] You have succesfully voted to rock the vote." , Color( 0, 255, 0 ) )	
+
+	if VoteTally >= reqdplayers then
+
+		chatMessageGlobal( "[TPG] Vote to change map was succesful. Commencing voting." , Color( 0, 255, 0 ) )
+
+		populateMapChoices()
+			
+
+		for i, ply in ipairs( player.GetAll() ) do
+			ply:ConCommand( "tpg_votemap_menu" )
+		end
+
+		for _, aply in pairs (player.GetAll()) do
+			GameVars.PlayerScoreTrackers[aply] = GameVars.PlayerScoreTrackers[aply] or {}
+			GameVars.PlayerScoreTrackers[aply][99] = 0
+
+		end
+
+		chatMessageGlobal( "[TPG] 20 seconds to vote for the next map!" , Color( 0, 255, 255 ) )
+		timer.Simple( 10, function() chatMessageGlobal( "[TPG] 10 seconds to vote for the next map!" , Color( 0, 255, 255 ) ) end )
+		timer.Simple( 15, function() chatMessageGlobal( "[TPG] 5 seconds to vote for the next map!" , Color( 255, 0, 0 ) ) end )
+		timer.Simple( 21, function() tallyVotes() end ) --1 extra second because people are stupid
+
+
+
+	else
+
+		chatMessageGlobal( "[TPG] ("..reqdplayers-VoteTally..") more players are required to change maps." , Color( 255, 255, 0 ) )
+	end
+
+
+end)
+
+
+concommand.Add( "votescramble", function( ply, cmd, args ) --Teams too unbalanced? How about no!
+
+	GameVars.PlayerScoreTrackers[ply] = GameVars.PlayerScoreTrackers[ply] or {}
+
+	GameVars.PlayerScoreTrackers[ply][100] = 1
+
+	local VoteTally = 0
+	local TotalPlayers = 0
+	for _, aply in pairs (player.GetAll()) do
+		GameVars.PlayerScoreTrackers[aply] = GameVars.PlayerScoreTrackers[aply] or {}
+		VoteTally = VoteTally + (GameVars.PlayerScoreTrackers[aply][100] or 0)
+		TotalPlayers = TotalPlayers + 1
+	end
+
+	local reqdplayers = math.ceil(math.max(TotalPlayers*0.25,2)) --A minimum of 2 players are required to votescramble or 25% of all players.
+	reqdplayers = 1
+	chatMessagePly(ply, "[TPG] You have succesfully voted to scramble teams." , Color( 0, 255, 0 ) )	
+
+	if VoteTally >= reqdplayers then
+
+		chatMessageGlobal( "[TPG] Vote to scramble teams was succesful. Scrambing teams." , Color( 0, 255, 0 ) )
+		
+		for _, aply in pairs (player.GetAll()) do
+			GameVars.PlayerScoreTrackers[aply] = GameVars.PlayerScoreTrackers[aply] or {}
+			GameVars.PlayerScoreTrackers[aply][99] = 0
+			ply:SetTeam( 0 )
+		end
+
+		for _, aply in pairs (player.GetAll()) do
+			local FreeCount = team.NumPlayers(1) or 0
+			local DutyCount = team.NumPlayers(2) or 0
+		
+			if FreeCount < DutyCount then --Unbalanced Teams autobalance free
+				aply:SetTeam( 1 )
+				aply:Spawn()	
+			elseif DutyCount < FreeCount then --Unbalanced Teams autobalance duty
+				aply:SetTeam( 2 )
+				aply:Spawn()	
+			else
+				aply:SetTeam( math.random(1,2) )
+				aply:Spawn()	
+			end
+		end
+
+	else
+
+		chatMessageGlobal( "[TPG] ("..reqdplayers-VoteTally..") more players are required to scramble teams." , Color( 255, 255, 0 ) )
+	end
+
+
 end)
