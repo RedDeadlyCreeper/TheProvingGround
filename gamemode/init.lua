@@ -483,7 +483,7 @@ function TestTeamLims(ArgTable) --Use the same arguments as the original functio
 					end
 				end
 
-				local spawndelay = testweight*3 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
+				local spawndelay = testweight*2 --6 seconds per ton, makes 360 second wait for 60t, done to prevent vehicle spam
 
 				local TestNewSpawnTime = (GameVars.TimeVars["Time"] or 0) + spawndelay
 				if TestNewSpawnTime > (GameVars.DupeWaitTime[testplayer] or 0) then

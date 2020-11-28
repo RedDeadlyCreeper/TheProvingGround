@@ -77,9 +77,9 @@ GameVars.DupeWaitTime = {} --Used to keep track of player dupe spawn delays
 GameVars.DupeProps = {} --Temporarily used to store the props of a dupe. Used for dupe cooldown calculation. This had to be done to allow players to despawn dupes.
 GameVars.GameType = math.Rand(0,1) --Current game type. 1 = control points, 2 = KOTH, 3 = Deathmatch, 4 = CTF
 
-if GameVars.GameType < 0.1 then
+if GameVars.GameType < 0.2 then
 	GameVars.GameType = 2
-elseif GameVars.GameType < 0.25 then
+elseif GameVars.GameType < 0.2 then
 	GameVars.GameType = 3
 else
 	GameVars.GameType = 1
