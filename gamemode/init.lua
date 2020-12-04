@@ -735,9 +735,9 @@ end
 
 hook.Add( "PlayerDeath", "CommendationTracker", function( victim, inflictor, attacker )
 
---	if victim == attacker then
---		return
---	end
+	if victim == attacker then
+		return
+	end
 
 	local attackerIsPlayer = attacker:IsPlayer()
 
@@ -795,7 +795,7 @@ hook.Add( "PlayerDeath", "CommendationTracker", function( victim, inflictor, att
 		victim:Spawn()	
 		chatMessagePly(victim, "[TPG] You have been autobalanced." , Color( 255, 255, 0 ) )	
 	elseif deathteam == 2 and (FreeCount+1 < DutyCount) then
-		victim:SetTeam( 1 )
+		victim:SetTeam( 2 )
 		victim:Spawn()	
 		chatMessagePly(victim, "[TPG] You have been autobalanced." , Color( 255, 255, 0 ) )	
 	end

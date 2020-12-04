@@ -1561,7 +1561,7 @@ if Accel:Length() > (9999999999) then--129921, 999999999999999  --Pulling about 
 		Driver:ExitVehicle()
 --		Driver:Kill()
 		chatMessagePly(Driver, "[TPG] Exceeded 200 MPH in speed." , Color( 255, 0, 0 ) )
-		print(lastVel:Length())
+--		print(lastVel:Length())
 		end
 
 	elseif IsValid(Driver) then
