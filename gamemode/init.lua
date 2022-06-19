@@ -471,7 +471,7 @@ function TestTeamLims(ArgTable) --Use the same arguments as the original functio
 					
 					if class == "acf_ammo" then
 			--			print("Ammo")
-						if ent.BulletData.Type == "Refill" then
+						if ent.BulletData and ent.BulletData.Type == "Refill" then
 			--				print("Refill")
 							noValid = 1
 						end
@@ -599,7 +599,7 @@ function populateMapChoices() --Fills the map votelist with votemap choices.
 
 
 	--Open maps
-	local MapList1 = {"gm_emp_palmbay","gm_emp_midbridge","gm_greenchoke","gm_emp_arid","gm_baik_coast_03","gm_baik_coast_03_night","gm_baik_frontline","gm_baik_trenches","gm_baik_valley_split","gm_diprip_village","gm_emp_bush","gm_greenland","gm_islandrain_v3","gm_pacific_island_a3","gm_toysoldiers"}
+	local MapList1 = {"rp_wasteland","gm_emp_palmbay","gm_emp_midbridge","gm_greenchoke","gm_emp_arid","gm_baik_coast_03","gm_baik_coast_03_night","gm_baik_frontline","gm_baik_trenches","gm_baik_valley_split","gm_diprip_village","gm_emp_bush","gm_greenland","gm_islandrain_v3","gm_pacific_island_a3","gm_toysoldiers"}
 	local Count1 = table.Count( MapList1 )
 
 
@@ -815,16 +815,17 @@ end)
 --Git: https://github.com/Salamafet/AFK_Kicker/blob/master/lua/autorun/server/AFK_Kicker.lua
 
 --------------------------------------------------
-AFK_WARN_TIME = 20
+AFK_WARN_TIME = 600
 
-AFK_TIME = 120 
+AFK_TIME = 900
 --------------------------------------------------
 
 hook.Add("PlayerInitialSpawn", "MakeAFKVar", function(ply)
 	ply.NextAFK = CurTime() + AFK_TIME
 end)
 
-hook.Add("Think", "HandleAFKPlayers", function()
+--hook.Add("Think", "HandleAFKPlayers", function()
+timer.Create("AFK_Think", 1, 0, function()
 	for _, ply in pairs (player.GetAll()) do
 		if ( ply:IsConnected() and ply:IsFullyAuthenticated() ) then
 			if (!ply.NextAFK) then
@@ -834,8 +835,8 @@ hook.Add("Think", "HandleAFKPlayers", function()
 			local afktime = ply.NextAFK
 			if (CurTime() >= afktime - AFK_WARN_TIME) and (!ply.Warning) then
 				chatMessagePly(ply, "[TPG] AFK Warning:" , Color( 255, 0, 0 ) )	
-				chatMessagePly(ply, "[TPG] You will be disconnected in 60 seconds if you do not move." , Color( 255, 0, 0 ) )	
-				
+				chatMessagePly(ply, "[TPG] You will be disconnected in 5 minutes if you do not move." , Color( 255, 0, 0 ) )	
+				ply:SendLua([[system.FlashWindow()]])
 				ply.Warning = true
 			elseif (CurTime() >= afktime) and (ply.Warning) then
 				ply.Warning = nil
@@ -872,7 +873,7 @@ concommand.Add( "rock_the_vote", function( ply, cmd, args ) --Don't like the cur
 		TotalPlayers = TotalPlayers + 1
 	end
 
-	local reqdplayers = math.ceil(math.max(TotalPlayers/2,3)) --A minimum of 4 players are required to RTV.
+	local reqdplayers = math.ceil(math.max(TotalPlayers/2,3)) --A minimum of 3 players are required to RTV.
 
 	chatMessagePly(ply, "[TPG] You have succesfully voted to rock the vote." , Color( 0, 255, 0 ) )	
 
@@ -910,6 +911,11 @@ end)
 
 
 concommand.Add( "votescramble", function( ply, cmd, args ) --Teams too unbalanced? How about no!
+	if not ply:IsAdmin() then
+		chatMessagePly(ply, "[TPG] You must be admin to scramble the teams." , Color( 255, 0, 0 ) )	
+
+		return
+	end
 
 	GameVars.PlayerScoreTrackers[ply] = GameVars.PlayerScoreTrackers[ply] or {}
 
@@ -923,13 +929,13 @@ concommand.Add( "votescramble", function( ply, cmd, args ) --Teams too unbalance
 		TotalPlayers = TotalPlayers + 1
 	end
 
-	local reqdplayers = math.ceil(math.max(TotalPlayers*0.25,2)) --A minimum of 2 players are required to votescramble or 25% of all players.
+	local reqdplayers = math.ceil(math.max(TotalPlayers*0.6,2)) --A minimum of 2 players are required to votescramble or 60% of all players.
 	reqdplayers = 1
-	chatMessagePly(ply, "[TPG] You have succesfully voted to scramble teams." , Color( 0, 255, 0 ) )	
+	--chatMessagePly(ply, "[TPG] You have succesfully voted to scramble teams." , Color( 0, 255, 0 ) )	
 
 	if VoteTally >= reqdplayers then
 
-		chatMessageGlobal( "[TPG] Vote to scramble teams was succesful. Scrambing teams." , Color( 0, 255, 0 ) )
+		chatMessageGlobal( "[TPG] Scrambing teams." , Color( 0, 255, 0 ) )
 		
 		for _, aply in pairs (player.GetAll()) do
 			GameVars.PlayerScoreTrackers[aply] = GameVars.PlayerScoreTrackers[aply] or {}

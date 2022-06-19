@@ -279,29 +279,33 @@ end
 
 	local points = ents.FindByClass( "tpg_controlpoint" )
 
-	for id, ent in pairs( points ) do
+    if GameVars.GameType ~= 3 then
+        for id, ent in pairs( points ) do
 
-		local point = ent:GetPos() + ent:OBBCenter() + Vector (0,0,100)
-		local data2D = point:ToScreen()
+            if GameVars.GameType == 1 or (GameVars.GameType == 2 and id == 1) then
+                local point = ent:GetPos() + ent:OBBCenter() + Vector (0,0,100)
+                local data2D = point:ToScreen()
 
-		--if ( not data2D.visible ) then continue end
+                --if ( not data2D.visible ) then continue end
 
-	    draw.RoundedBox(10, data2D.x-5, data2D.y-5, 13, 13, ent:GetColor())
+                draw.RoundedBox(10, data2D.x-5, data2D.y-5, 13, 13, ent:GetColor())
 
 
 
-	    draw.RoundedBox(3,ScrW()/2-30*GameVars.PointCount/2+2+((id-1)*30), 115, 20, 20,ent:GetColor())
+                draw.RoundedBox(3,ScrW()/2-30*GameVars.PointCount/2+2+((id-1)*30), 115, 20, 20,ent:GetColor())
 
-		--draw.SimpleText( ent.PointName, "Default", data2D.x, data2D.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+                --draw.SimpleText( ent.PointName, "Default", data2D.x, data2D.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+            end
 
-	end
+        end
 
-    for id = 1, GameVars.PointCount do
-		local point = GameVars.PointPositions[id] + Vector (0,0,100)
-		local data2D = point:ToScreen()
-        draw.SimpleText( ""..(GameVars.PointNames[id] or "Error"), "Default", data2D.x-1, data2D.y-13, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+        for id = 1, GameVars.PointCount do
+            local point = GameVars.PointPositions[id] + Vector (0,0,100)
+            local data2D = point:ToScreen()
+            draw.SimpleText( ""..(GameVars.PointNames[id] or "Error"), "Default", data2D.x-1, data2D.y-13, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+        end
+    --    PointPositions
     end
---    PointPositions
 
     teamplayers = team.GetPlayers(Team)
 
@@ -475,9 +479,9 @@ hook.Add( "SpawnMenuOpen", "DisableSpawnMenuOutOfRange", function()
     end
 
 --	if ( !inrange and !LocalPlayer():IsAdmin() ) then
-	if ( inrange < 1 ) then
+	if ( inrange < 1 and not LocalPlayer():IsAdmin() ) then
 		chat.AddText( Color( 255, 0, 0 ), "[TPG] Cannot open spawn menu outside spawn.")
-			return LocalPlayer():IsAdmin()
+			return false
 	end
 end )
 
