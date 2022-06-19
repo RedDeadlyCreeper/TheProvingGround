@@ -6,11 +6,13 @@ include("shared.lua")
 
 function ENT:Initialize()
 
-	self:SetModel( "models/props_gameplay/cap_point_base.mdl" )
+	self:SetModel( "models/xqm/cylinderx1.mdl" )
 	self:SetMoveType(MOVETYPE_VPHYSICS);
 	self:PhysicsInit(SOLID_VPHYSICS);
 	self:SetUseType(SIMPLE_USE);
 	self:SetSolid(SOLID_VPHYSICS);
+	self:ManipulateBoneScale(0, Vector(1, 10, 10))
+	self:SetAngles(Angle(90, 90, 0))
 	local phys = self:GetPhysicsObject()
 	phys:SetMass(500000)
 

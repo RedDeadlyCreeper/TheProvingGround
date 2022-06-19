@@ -75,19 +75,51 @@ GameVars.WeightGreenCount = 0
 GameVars.WeightRedCount = 0
 GameVars.DupeWaitTime = {} --Used to keep track of player dupe spawn delays
 GameVars.DupeProps = {} --Temporarily used to store the props of a dupe. Used for dupe cooldown calculation. This had to be done to allow players to despawn dupes.
-GameVars.GameType = math.Rand(0,1) --Current game type. 1 = control points, 2 = KOTH, 3 = Deathmatch, 4 = CTF
 
-if GameVars.GameType < 0.2 then
-	GameVars.GameType = 2
-elseif GameVars.GameType < 0.2 then
-	GameVars.GameType = 3
+if SERVER then
+	GameVars.GameType = math.Rand(0,1) --Current game type. 1 = control points, 2 = KOTH, 3 = Deathmatch, 4 = CTF
+
+	if GameVars.GameType > 0.3 then
+		GameVars.GameType = 1
+	elseif GameVars.GameType > 0.2 then
+		GameVars.GameType = 2
+	else
+		GameVars.GameType = 3
+	end
+
+	util.AddNetworkString("TPG_GameType")
+
+	hook.Add("PlayerInitialSpawn", "tpg_initgamemode", function(ply)
+		net.Start("TPG_GameType")
+			net.WriteUInt(GameVars.GameType, 4)
+			net.WriteUInt(GameVars.PointCount, 4)
+			net.WriteTable(GameVars.PointPositions)
+			net.WriteTable(GameVars.PointNames)
+		net.Broadcast()
+	end)
+
 else
-	GameVars.GameType = 1
+	GameVars.GameType = -1
+
+	net.Receive("TPG_GameType", function()
+		local gameType = net.ReadUInt(4)
+		local pointCount = net.ReadUInt(4)
+		local pointPositions = net.ReadTable()
+		local pointNames = net.ReadTable()
+
+		timer.Simple(1, function()
+			GameVars.GameType = gameType
+			GameVars.PointCount = pointCount
+			GameVars.PointPositions = pointPositions
+			GameVars.PointNames = pointNames
+		end)
+	end)
 end
 
+timer.Simple(1, function()
+	setupGamemode()
+end)
 
-
---GameVars.GameType = 3
 --GameVars.DeathTickets = 0 --Whether to subtract tickets on death from each team.
 
 GameVars.GameThinkTick = 0 --Every 30 iterations the game thinks
@@ -175,7 +207,7 @@ function GamemodeThinkingThing()
 
 			if GameVars.Searchtick >= 100 then
 				GameVars.Searchtick = 0
-				print("[TPG] Updating Propcount")
+				--print("[TPG] Updating Propcount")
 				updatePropcount(0)
 			end
 
@@ -204,7 +236,7 @@ function GamemodeThinkingThing()
 
 				if not ply:GetVehicle():IsValid() then
 
-					if ply:WaterLevel() >= 2 then
+					if ply:WaterLevel() >= 2 and not ply:HasGodMode() then
 
 						ply:Kill()
 						chatMessagePly(ply, "[TPG] HALP I CANNOT SWIM!!!" , Color( 255, 0, 0 ) )
@@ -280,7 +312,9 @@ function GamemodeThinkingThing()
 
 		for i=1,GameVars.PointCount or 0 do 
 			if IsValid(GameVars.PointEntities[i]) then
-			CapPoints = CapPoints + GameVars.PointEntities[i].CapOwnership
+				if GameVars.PointEntities[i].CapOwnership then
+					CapPoints = CapPoints + GameVars.PointEntities[i].CapOwnership
+				end
 			end
 		end 
 
@@ -419,8 +453,10 @@ end
 hook.Add("Think", "SecondPrint", GamemodeThinkingThing)
 
 hook.Add("PlayerGiveSWEP", "AdminOnlySWEPs", function( ply, class, wep )
-	chatMessagePly(ply, "Only admins can spawn SWEPS." , Color( 255, 0, 0 ) )
-	return ply:IsAdmin()
+	if not ply:IsAdmin() then
+		chatMessagePly(ply, "[TPG] Only admins can spawn SWEPS." , Color( 255, 0, 0 ) )
+		return false
+	end
 end)
 
 function updatePropcount(ContextCalled)
@@ -554,13 +590,15 @@ GameVars.SZRadius = 750 --Radius of safezones around spawns in units
 --I Could use tables buuuuuuuuuuut meh.
 --Brace yourself for the mother of all if statements.
 --GameVars.GameType
+local propCountMul = 1.3
+
 if GameVars.GameType == 1 then
 	if MapName == "gm_construct" then
 
 		GameVars.FreedomSpawn = Vector(727,548,-143)
 		GameVars.DutySpawn = Vector(-4970,-3434,251)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 2
 		GameVars.CapMul = 3 --Feel free to override this in map setup
 		GameVars.SZRadius = 750
@@ -572,7 +610,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(5280, 4760, 256)
 		GameVars.DutySpawn = Vector(-5280,-4760, 256)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 2
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -583,7 +621,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-4678, -5985, 501)
 		GameVars.DutySpawn = Vector(7312, 4011, 295)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 2
 		GameVars.CapMul = 0.025	
 		GameVars.SZRadius = 750
@@ -593,7 +631,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-3038, 3038, 17)
 		GameVars.DutySpawn = Vector(3038, -3038, 17)
 		GameVars.WeightLimit = 40
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -603,7 +641,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-1920, 3944, 513)
 		GameVars.DutySpawn = Vector(2245, -3674, 777)
 		GameVars.WeightLimit = 40
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -613,7 +651,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(13127,-11026,513)
 		GameVars.DutySpawn = Vector(-11004, 12164, 537)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -623,7 +661,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-6670, -3958, 1760)
 		GameVars.DutySpawn = Vector(10288, 2047, 1761)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 250
+		GameVars.PropCountMax = 250 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -633,7 +671,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(632, -9715, 2081)
 		GameVars.DutySpawn = Vector(-628, 9755, 2081)
 		GameVars.WeightLimit = 160
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 4
 		GameVars.CapMul = 0.01	
 		GameVars.SZRadius = 750
@@ -643,7 +681,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-6577, -8994, -2331)
 		GameVars.DutySpawn = Vector(8857, 10746, -2331)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 250
+		GameVars.PropCountMax = 250 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -653,7 +691,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-9156, 10610, 1038)
 		GameVars.DutySpawn = Vector(9055, -10722, 1038)
 		GameVars.WeightLimit = 100
-		GameVars.PropCountMax = 250
+		GameVars.PropCountMax = 250 * propCountMul
 		GameVars.PointCount = 5
 		GameVars.CapMul = 0.01	
 		GameVars.SZRadius = 750
@@ -663,7 +701,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-9284, 357, -20)
 		GameVars.DutySpawn = Vector(6748, 485, -21)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -673,7 +711,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-1360, -8207, 1)
 		GameVars.DutySpawn = Vector(-1428, 2101, 1)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 250
+		GameVars.PropCountMax = 250 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -683,7 +721,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(3852,0,102)
 		GameVars.DutySpawn = Vector(-3852,0,102)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -693,7 +731,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-6285, -5632, 7)
 		GameVars.DutySpawn = Vector(6193, 723, 8)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02	
 		GameVars.SZRadius = 750
@@ -703,7 +741,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-10163,11922,-11136)
 		GameVars.DutySpawn = Vector(11937,-7932,-11136)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 2
 		GameVars.CapMul = 0.025	
 		GameVars.SZRadius = 750
@@ -713,7 +751,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-7754, 6833, 161)
 		GameVars.DutySpawn = Vector(4141, -5520, 320)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
@@ -723,7 +761,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(5974, 3971, 7)
 		GameVars.DutySpawn = Vector(-8421, -11827, 185)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
@@ -733,7 +771,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-11392, -11104, -3333)
 		GameVars.DutySpawn = Vector(10060, 11788, -3327)
 		GameVars.WeightLimit = 160
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
@@ -743,7 +781,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(3216, 12558, 9)
 		GameVars.DutySpawn = Vector(-7078, -13608, 9)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 250
+		GameVars.PropCountMax = 250 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
@@ -753,7 +791,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-10769, 3232, 34)
 		GameVars.DutySpawn = Vector(6398,1988,464)
 		GameVars.WeightLimit = 100
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
@@ -763,7 +801,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-3461, -10270, 2)
 		GameVars.DutySpawn = Vector(3461, 10270, 2)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
@@ -773,7 +811,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-3831, 10741, -1200)
 		GameVars.DutySpawn = Vector(8391, -9920, -1175)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
@@ -783,7 +821,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(13995,8546,-10539)
 		GameVars.DutySpawn = Vector(636,13393,-10612)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
@@ -793,7 +831,7 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-5186,5086,-383)
 		GameVars.DutySpawn = Vector(5186,-5086,-383)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
@@ -803,12 +841,22 @@ if GameVars.GameType == 1 then
 		GameVars.FreedomSpawn = Vector(-4246, -4855, 65)
 		GameVars.DutySpawn = Vector(-3856, 1488,65)
 		GameVars.WeightLimit = 40
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 3
 		GameVars.CapMul = 0.02
 		GameVars.SZRadius = 750
 		GameVars.PointPositions = {Vector(-1968, -1324, -74),Vector(2609, -2517, 40),Vector(1728, 918, 64)} 
 		GameVars.PointNames = {"Extremely Confused Boat","Broken Car","Garage"}
+	elseif MapName == "rp_wasteland" then
+		GameVars.FreedomSpawn = Vector(-12842, 13209, 12)
+		GameVars.DutySpawn = Vector(12115, -13326, 13)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300 * propCountMul
+		GameVars.PointCount = 3
+		GameVars.CapMul = 0.025
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(35, -57, -566),Vector(-4369, -11613, -512),Vector(4667, 9169, -503)} 
+		GameVars.PointNames = {"Center","Warehouse","Helipad"}
 	end
 
 elseif GameVars.GameType == 2 then --KOTH
@@ -817,7 +865,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(727,548,-143)
 		GameVars.DutySpawn = Vector(-4970,-3434,251)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15 --Feel free to override this in map setup
 		GameVars.SZRadius = 750
@@ -829,7 +877,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(5280, 4760, 256)
 		GameVars.DutySpawn = Vector(-5280,-4760, 256)
 		GameVars.WeightLimit = 40
-		GameVars.PropCountMax = 100
+		GameVars.PropCountMax = 100 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -840,7 +888,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-4678, -5985, 501)
 		GameVars.DutySpawn = Vector(7312, 4011, 295)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 100
+		GameVars.PropCountMax = 100 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -850,7 +898,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-3038, 3038, 17)
 		GameVars.DutySpawn = Vector(3038, -3038, 17)
 		GameVars.WeightLimit = 20
-		GameVars.PropCountMax = 100
+		GameVars.PropCountMax = 100 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -860,7 +908,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-1920, 3944, 513)
 		GameVars.DutySpawn = Vector(2245, -3674, 777)
 		GameVars.WeightLimit = 20
-		GameVars.PropCountMax = 100
+		GameVars.PropCountMax = 100 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -870,7 +918,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(13127,-11026,513)
 		GameVars.DutySpawn = Vector(-11004, 12164, 537)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -880,7 +928,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-6670, -3958, 1760)
 		GameVars.DutySpawn = Vector(10288, 2047, 1761)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -890,7 +938,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(632, -9715, 2081)
 		GameVars.DutySpawn = Vector(-628, 9755, 2081)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -900,7 +948,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-6577, -8994, -2331)
 		GameVars.DutySpawn = Vector(8857, 10746, -2331)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -910,7 +958,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-9156, 10610, 1038)
 		GameVars.DutySpawn = Vector(9055, -10722, 1038)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -920,7 +968,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-9284, 357, -20)
 		GameVars.DutySpawn = Vector(6748, 485, -21)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -930,7 +978,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-1360, -8207, 1)
 		GameVars.DutySpawn = Vector(-1428, 2101, 1)
 		GameVars.WeightLimit = 40
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -940,7 +988,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(3852,0,102)
 		GameVars.DutySpawn = Vector(-3852,0,102)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -950,7 +998,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-6285, -5632, 7)
 		GameVars.DutySpawn = Vector(6193, 723, 8)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -960,7 +1008,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-10163,11922,-11136)
 		GameVars.DutySpawn = Vector(11937,-7932,-11136)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -970,7 +1018,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-7754, 6833, 161)
 		GameVars.DutySpawn = Vector(4141, -5520, 320)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -980,7 +1028,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(5974, 3971, 7)
 		GameVars.DutySpawn = Vector(-8421, -11827, 185)
 		GameVars.WeightLimit = 40
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -990,7 +1038,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-11392, -11104, -3333)
 		GameVars.DutySpawn = Vector(10060, 11788, -3327)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1000,7 +1048,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(3216, 12558, 9)
 		GameVars.DutySpawn = Vector(-7078, -13608, 9)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1010,7 +1058,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-10769, 3232, 34)
 		GameVars.DutySpawn = Vector(6398,1988,464)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1020,7 +1068,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-3461, -10270, 2)
 		GameVars.DutySpawn = Vector(3461, 10270, 2)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1030,7 +1078,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-3831, 10741, -1200)
 		GameVars.DutySpawn = Vector(8391, -9920, -1175)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1040,7 +1088,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(13995,8546,-10539)
 		GameVars.DutySpawn = Vector(636,13393,-10612)
 		GameVars.WeightLimit = 40
-		GameVars.PropCountMax = 100
+		GameVars.PropCountMax = 100 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1050,7 +1098,7 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-5186,5086,-383)
 		GameVars.DutySpawn = Vector(5186,-5086,-383)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1060,13 +1108,24 @@ elseif GameVars.GameType == 2 then --KOTH
 		GameVars.FreedomSpawn = Vector(-4246, -4855, 65)
 		GameVars.DutySpawn = Vector(-3856, 1488,65)
 		GameVars.WeightLimit = 20
-		GameVars.PropCountMax = 100
+		GameVars.PropCountMax = 100 * propCountMul
 		GameVars.PointCount = 1
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
 		GameVars.PointPositions = {2173,-763,72} 
 		GameVars.PointNames = {"The Hill"}
+	elseif MapName == "rp_wasteland" then
+		GameVars.FreedomSpawn = Vector(-12842, 13209, 12)
+		GameVars.DutySpawn = Vector(12115, -13326, 13)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300 * propCountMul
+		GameVars.PointCount = 1
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {Vector(35, -57, -566)} 
+		GameVars.PointNames = {"The Hill"}
 	end
+
 elseif GameVars.GameType == 3 then --DM
 	GameVars.DeathTickets = 1 --The staple of deathmatch
 	if MapName == "gm_construct" then
@@ -1074,7 +1133,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(727,548,-143)
 		GameVars.DutySpawn = Vector(-4970,-3434,251)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15 --Feel free to override this in map setup
 		GameVars.SZRadius = 750
@@ -1086,7 +1145,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(5280, 4760, 256)
 		GameVars.DutySpawn = Vector(-5280,-4760, 256)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1097,7 +1156,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-4678, -5985, 501)
 		GameVars.DutySpawn = Vector(7312, 4011, 295)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1107,7 +1166,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-3038, 3038, 17)
 		GameVars.DutySpawn = Vector(3038, -3038, 17)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1117,7 +1176,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-1920, 3944, 513)
 		GameVars.DutySpawn = Vector(2245, -3674, 777)
 		GameVars.WeightLimit = 40
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1127,7 +1186,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(13127,-11026,513)
 		GameVars.DutySpawn = Vector(-11004, 12164, 537)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1137,7 +1196,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-6670, -3958, 1760)
 		GameVars.DutySpawn = Vector(10288, 2047, 1761)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1147,7 +1206,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(632, -9715, 2081)
 		GameVars.DutySpawn = Vector(-628, 9755, 2081)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1157,7 +1216,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-6577, -8994, -2331)
 		GameVars.DutySpawn = Vector(8857, 10746, -2331)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1167,7 +1226,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-9156, 10610, 1038)
 		GameVars.DutySpawn = Vector(9055, -10722, 1038)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1177,7 +1236,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-9284, 357, -20)
 		GameVars.DutySpawn = Vector(6748, 485, -21)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1187,7 +1246,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-1360, -8207, 1)
 		GameVars.DutySpawn = Vector(-1428, 2101, 1)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1197,7 +1256,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(3852,0,102)
 		GameVars.DutySpawn = Vector(-3852,0,102)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1207,7 +1266,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-6285, -5632, 7)
 		GameVars.DutySpawn = Vector(6193, 723, 8)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1217,7 +1276,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-10163,11922,-11136)
 		GameVars.DutySpawn = Vector(11937,-7932,-11136)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15	
 		GameVars.SZRadius = 750
@@ -1227,7 +1286,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-7754, 6833, 161)
 		GameVars.DutySpawn = Vector(4141, -5520, 320)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1237,7 +1296,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(5974, 3971, 7)
 		GameVars.DutySpawn = Vector(-8421, -11827, 185)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1247,7 +1306,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-11392, -11104, -3333)
 		GameVars.DutySpawn = Vector(10060, 11788, -3327)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1257,7 +1316,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(3216, 12558, 9)
 		GameVars.DutySpawn = Vector(-7078, -13608, 9)
 		GameVars.WeightLimit = 80
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1267,7 +1326,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-10769, 3232, 34)
 		GameVars.DutySpawn = Vector(6398,1988,464)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1277,7 +1336,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-3461, -10270, 2)
 		GameVars.DutySpawn = Vector(3461, 10270, 2)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1287,7 +1346,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-3831, 10741, -1200)
 		GameVars.DutySpawn = Vector(8391, -9920, -1175)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 200
+		GameVars.PropCountMax = 200 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1297,7 +1356,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(13995,8546,-10539)
 		GameVars.DutySpawn = Vector(636,13393,-10612)
 		GameVars.WeightLimit = 60
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1307,7 +1366,7 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-5186,5086,-383)
 		GameVars.DutySpawn = Vector(5186,-5086,-383)
 		GameVars.WeightLimit = 120
-		GameVars.PropCountMax = 300
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1317,7 +1376,17 @@ elseif GameVars.GameType == 3 then --DM
 		GameVars.FreedomSpawn = Vector(-4246, -4855, 65)
 		GameVars.DutySpawn = Vector(-3856, 1488,65)
 		GameVars.WeightLimit = 40
-		GameVars.PropCountMax = 150
+		GameVars.PropCountMax = 150 * propCountMul
+		GameVars.PointCount = 0
+		GameVars.CapMul = 0.15
+		GameVars.SZRadius = 750
+		GameVars.PointPositions = {} 
+		GameVars.PointNames = {}
+	elseif MapName == "rp_wasteland" then
+		GameVars.FreedomSpawn = Vector(-12842, 13209, 12)
+		GameVars.DutySpawn = Vector(12115, -13326, 13)
+		GameVars.WeightLimit = 120
+		GameVars.PropCountMax = 300 * propCountMul
 		GameVars.PointCount = 0
 		GameVars.CapMul = 0.15
 		GameVars.SZRadius = 750
@@ -1326,11 +1395,74 @@ elseif GameVars.GameType == 3 then --DM
 	end
 end
 
-
-
 --Do not edit below here
 
+if SERVER then
+	hook.Add("PlayerInitialSpawn", "tpg_stamina", function(ply)
+		ply:SetNWFloat("tpg_stamina", 100)
+	end)
+end
+
+CreateConVar("tpg_stamina_regenrate", 10, {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How much stamina you regenerate per second", 0, 100)
+CreateConVar("tpg_stamina_jumploss", 25, {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How much stamina you lose when you jump", 0, 100)
+
+if SERVER then
+	timer.Create("tpg_staminaregen", 0.1, 0, function()
+		local regenRate = GetConVar("tpg_stamina_regenrate") and GetConVar("tpg_stamina_regenrate"):GetInt() or 10
+
+		for k, ply in ipairs(player.GetAll()) do
+			local onGround = ply:OnGround()
+			local isReallyCrouching = ply:Crouching() and onGround
+			local newRegenRate = regenRate * (isReallyCrouching and 3 or 1) - math.max(ply:GetVelocity():Length() / 20, 1)
+
+			ply:SetNWFloat("tpg_stamina", math.Clamp(ply:GetNWFloat("tpg_stamina", 100) + (newRegenRate / 10), 0, 100))
+		end
+	end)
+end
+
+--Example from https://wiki.facepunch.com/gmod/GM:SetupMove
+local CMoveData = FindMetaTable("CMoveData")
+function CMoveData:RemoveKeys(keys)
+	-- Using bitwise operations to clear the key bits.
+	local newbuttons = bit.band(self:GetButtons(), bit.bnot(keys))
+	self:SetButtons(newbuttons)
+end
+
+hook.Add("SetupMove", "Disable Jumping", function(ply, mv, cmd)
+	local jumpStamina = GetConVar("tpg_stamina_jumploss") and GetConVar("tpg_stamina_jumploss"):GetInt() or 25
+
+	if mv:KeyDown(IN_JUMP) and ply:GetMoveType() == MOVETYPE_WALK and ply:IsOnGround() then
+		if ply:GetNWFloat("tpg_stamina", 0) < jumpStamina then
+			mv:RemoveKeys(IN_JUMP)
+		elseif SERVER then
+			ply:SetNWFloat("tpg_stamina", ply:GetNWFloat("tpg_stamina", 100) - jumpStamina)
+		end
+	end
+end)
+
+if CLIENT then
+	hook.Add("HUDPaint", "tpg_stamina", function()
+		local ply = LocalPlayer()
+		if ply:IsValid() then
+			local stamina = ply:GetNWFloat("tpg_stamina", 0)
+
+			--Draw stamina bar above health bar
+			local x, y = ScrW() / 2, ScrH() - 50
+			local w, h = 200, 10
+			local barw = math.Clamp(stamina / 100 * w, 0, w)
+
+			if stamina < 100 then
+				draw.RoundedBox(0, x - w / 2, y, w, h, Color(0, 0, 0, 100))
+				draw.RoundedBox(0, x - w / 2 + 2, y + 2, barw - 4, h - 4, Color(255, 255, 255, 100))
+			end
+		end
+	end)
+end
+
 function spawnPoint(pointnum)
+
+	if GameVars.GameType == 3 then return end
+	if GameVars.GameType == 2 and pointnum > 1 then return end
 
 	local ent = ents.Create( "tpg_controlpoint" )
 	
@@ -1368,6 +1500,7 @@ GameVars.DutySpawn = storespawn
 GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,3000) --CLAMP DAMN YOU
 
 function setupGamemode()
+	if not SERVER then return end
 
 	GameVars.SZRadius = math.Clamp(GameVars.SZRadius,200,3000)
 
@@ -1413,6 +1546,12 @@ function setupGamemode()
 		ent.PointID = pointnum --Adjusted by the spawn command, this adjusts the output signal.
 	end
 
+	net.Start("TPG_GameType")
+		net.WriteUInt(GameVars.GameType, 4)
+		net.WriteUInt(GameVars.PointCount, 4)
+		net.WriteTable(GameVars.PointPositions)
+		net.WriteTable(GameVars.PointNames)
+	net.Broadcast()
 
 end
 
@@ -1545,7 +1684,7 @@ function calculateForceLimits(id,Deltime) --Will boot a player out of their seat
 	--7716400 old
 	--129921 ~= 50G
 --	if Accel:Length() > (24000) then--129921, 999999999999999  --Pulling about 50g. If you pull this hard you should get something checked out.
-if Accel:Length() > (9999999999) then--129921, 999999999999999  --Pulling about 50g. If you pull this hard you should get something checked out.
+if Accel:Length() > (129921) then--129921, 999999999999999  --Pulling about 50g. If you pull this hard you should get something checked out.
 --print(Accel:Length())
 		if IsValid(Driver) then
 		Driver:ExitVehicle()
@@ -1554,7 +1693,7 @@ if Accel:Length() > (9999999999) then--129921, 999999999999999  --Pulling about 
 		end
 
 --	elseif lastVel:Length() > 3500 then --9999999999 , 3500 about 200 mph
-	elseif lastVel:Length() > 9999999999 then --9999999999 , 3500 about 200 mph
+	elseif lastVel:Length() > 129921 then --9999999999 , 3500 about 200 mph
 
 ---		print(lastVel:Length())
 		if IsValid(Driver) then
@@ -1723,8 +1862,35 @@ function commendPlayers() --Called at end of round 10 seconds before votemap sta
 	chatMessageGlobal( "[TPG] "..BestPlayer:Name().." captured the most points with ["..BestVal.."] total captures. They have earned this medal ["..MedalCount.."] times" , Color( 255, 0, 0 ) )
 	end
 
-
+	
 
 	GameVars.PlayerScoreTrackers = {} --Clean Slate
 
+end
+
+if SERVER then
+	function TPG_ShowMedals( ply )
+		chatMessagePly(ply, "[TPG] "..ply:Name().." has earned the following medals: " , Color( 0, 255, 0 ) )
+
+		local MedalCount = ply:GetPData("TPG_KillAwards", 0)
+		chatMessagePly(ply, "[TPG] Highest Kill Count ["..MedalCount.."]" , Color( 0, 255, 0 ) )
+
+		MedalCount = ply:GetPData("TPG_KPTAwards", 0)
+		chatMessagePly(ply, "[TPG] Highest Kills Per Ton ["..MedalCount.."]" , Color( 0, 255, 0 ) )
+
+		MedalCount = ply:GetPData("TPG_OBJKAwards", 0)
+		chatMessagePly(ply, "[TPG] Most Near-point Kills ["..MedalCount.."]" , Color( 0, 255, 0 ) )
+
+		MedalCount = ply:GetPData("TPG_CapAwards", 0)
+		chatMessagePly(ply, "[TPG] Most Captures ["..MedalCount.."]" , Color( 0, 255, 0 ) )
+
+	end
+
+	hook.Add("PlayerSay", "TPG_ShowMedals", function(ply, text)
+		if string.lower(text) == "!medals" then
+			TPG_ShowMedals( ply )
+
+			return ""
+		end
+	end)
 end
